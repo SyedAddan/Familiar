@@ -1,13 +1,14 @@
 import React from "react";
+import Layout from "../../components/layout/layout";
 // import "./Pricing.css";
 
 const Pricing = () => {
     return (
-        <div>
-            <h1>
+        <Layout>
+            <h6>
                 What your broke ass doing here, my nigga? 💀
-            </h1>
-        </div>
+            </h6>
+        </Layout>
     )
 }
 
