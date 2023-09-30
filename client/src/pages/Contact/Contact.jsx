@@ -1,14 +1,14 @@
 import React from "react";
 // import "./ChatBot.css";
 
-const ChatBot = () => {
+const Contact = () => {
     return (
         <div>
             <h1>
-                Hello, this is the chatbot.
+                You are contacting me ffs.
             </h1>
         </div>
     )
 }
 
-export default ChatBot
+export default Contact
