@@ -18,7 +18,7 @@ root.render(
     <BrowserRouter>
       <Routes>
         <Route path="/" exact element={<Home></Home>} />
-        <Route path="/chatbot" exact element={<ChatBot></ChatBot>} />
+        <Route path="/chat" exact element={<ChatBot></ChatBot>} />
         <Route path="/contact" exact element={<Contact></Contact>} />
         <Route path="/login" exact element={<Login></Login>} />
         <Route path="/signup" exact element={<Signup></Signup>} />
