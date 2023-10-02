@@ -3,11 +3,9 @@ import React from "react";
 
 const Signup = () => {
     return (
-        <div>
-            <h1>
-                You don't therapy you need, you need Allah. 👀
-            </h1>
-        </div>
+        <h1>
+            You don't therapy you need, you need Allah. 👀
+        </h1>
     )
 }
 
