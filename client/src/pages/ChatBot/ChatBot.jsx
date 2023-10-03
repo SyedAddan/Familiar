@@ -21,12 +21,12 @@ const ChatBot = () => {
     setInput(e.target.value);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (input.trim() === "") return;
     const userMessage = { text: input, type: "user" };
     addMessage(userMessage);
     setInput("");
-    simulateChatbotResponse(input);
+    await simulateChatbotResponse(input);
   };
 
   const addMessage = (message) => {
@@ -35,11 +35,12 @@ const ChatBot = () => {
     scrollToBottom();
   };
 
-  const simulateChatbotResponse = (message) => {
-    axios
-      .get(`https://your-api-url.com/chatbot?message=${message}`)
+  const simulateChatbotResponse = async (message) => {
+    await axios
+      .post(`/chatbot`, {"message": message})
       .then((response) => {
-        const chatbotResponse = { text: response.data, type: "bot" };
+        console.log(response.data)
+        const chatbotResponse = { text: response.data.responseText, type: "bot" };
         addMessage(chatbotResponse);
       })
       .catch((error) => {
