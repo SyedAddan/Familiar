@@ -32,14 +32,13 @@ const ChatBot = () => {
   const addMessage = (message) => {
     console.log(message);
     setMessages((prevMessages) => [...prevMessages, message]);
-    scrollToBottom();
   };
 
   const simulateChatbotResponse = async (message) => {
     await axios
       .post(`/chatbot`, {"message": message})
       .then((response) => {
-        console.log(response.data)
+        console.log(response.data);
         const chatbotResponse = { text: response.data.responseText, type: "bot" };
         addMessage(chatbotResponse);
       })
@@ -92,13 +91,6 @@ const ChatBot = () => {
       });
   };
 
-  const scrollToBottom = () => {
-    if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
-    }
-  };
-
   const stopRecording = () => {
     // Stop recording
     mediaRecorderRef.current.stop();
@@ -125,7 +117,6 @@ const ChatBot = () => {
 
   useEffect(() => {
     if (messageContainerRef.current) {
-      console.log(messages);
       messageContainerRef.current.scrollTop =
         messageContainerRef.current.scrollHeight;
     }
