@@ -11,7 +11,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 llm_model = "gpt-3.5-turbo"
-llm = ChatOpenAI(temperature=0.0, model=llm_model, openai_api_key=OPENAI_API_KEY)
+llm = ChatOpenAI(temperature=0.9, model=llm_model, openai_api_key=OPENAI_API_KEY)
 memory = ConversationBufferMemory()
 conversation = ConversationChain(
     llm=llm,
