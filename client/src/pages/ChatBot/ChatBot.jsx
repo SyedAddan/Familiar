@@ -26,7 +26,7 @@ const ChatBot = () => {
     const userMessage = { text: input, type: "user" };
     addMessage(userMessage);
     setInput("");
-    await simulateChatbotResponse(input);
+    await getResponse(input);
   };
 
   const addMessage = (message) => {
@@ -34,12 +34,15 @@ const ChatBot = () => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const simulateChatbotResponse = async (message) => {
+  const getResponse = async (message) => {
     await axios
-      .post(`/chatbot`, {"message": message})
+      .post(`/chatbot`, { message: message })
       .then((response) => {
         console.log(response.data);
-        const chatbotResponse = { text: response.data.responseText, type: "bot" };
+        const chatbotResponse = {
+          text: response.data.responseText,
+          type: "bot",
+        };
         addMessage(chatbotResponse);
       })
       .catch((error) => {
@@ -105,14 +108,31 @@ const ChatBot = () => {
     // Handle audio data (transcription or playback)
     const audioBlob = event.data;
 
-    // You can transcribe audio here or play it back
-    // For example, you can transcribe the audio using an API
-    // or play it back using an <audio> element.
-
-    // To play back the audio using an <audio> element:
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audioElement = new Audio(audioUrl);
-    audioElement.play();
+    axios
+      .post(`/stt`, {"audio": audioBlob}, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
+        const sttText = { text: response.data.responseText, type: "user" };
+        addMessage(sttText);
+        getResponse(sttText.text);
+      })
+      .catch((error) => {
+        console.error("Error fetching STT response:", error);
+        const sttText = {
+          text: "Sorry, something went wrong.",
+          type: "user",
+        };
+        addMessage(sttText);
+        const botText = {
+          text: "Sorry, something went wrong.",
+          type: "bot",
+        };
+        addMessage(botText);
+      });
   };
 
   useEffect(() => {
