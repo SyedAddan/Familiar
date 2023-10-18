@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import time
-
+from scipy.io import wavfile
 from py_handlers.chatbot.chatbot import generate_chatbot_response
 from py_handlers.stt.stt import generate_text_from_speech
 
@@ -19,13 +19,19 @@ def chatbot():
     except Exception as e:
         print(e)
         return jsonify({"responseText": "Something went wrong", "responceTime": 0}), 500
-    
+
+
 @app.route('/stt', methods=['POST'])
 def stt():
     try:
         audioBlob = request.files['audio']
         # display the audioBlob
-        
+        # audio_path = 'audio.wav'
+
+        # # Save the audioBlob as a WAV file with a specific sample rate (e.g., 22050 Hz)
+        # sample_rate = 22050
+        # wavfile.write(audio_path, sample_rate, audioBlob.read())
+
         text = generate_text_from_speech(audioBlob)
         return jsonify({'text': text}), 200
     except Exception as e:

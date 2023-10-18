@@ -116,7 +116,7 @@ const ChatBot = () => {
       })
       .then((response) => {
         console.log(response.data);
-        const sttText = { text: response.data.responseText, type: "user" };
+        const sttText = { text: response.data.text, type: "user" };
         addMessage(sttText);
         getResponse(sttText.text);
       })
