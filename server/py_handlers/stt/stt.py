@@ -4,6 +4,9 @@ import os
 
 from glob import glob
 from werkzeug.utils import secure_filename
+import subprocess
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model, decoder, utils = torch.hub.load(repo_or_dir='snakers4/silero-models',
@@ -18,7 +21,7 @@ def generate_text_from_speech(audioBlob):
     # import os
 
     # Replace with the path to the folder you want to work with
-    folder_path = 'C:\\Users\\dortemon\\Downloads\\FYP\\Familiar\\server'
+    folder_path = './'
     extension_to_delete = 'blob.wav' and 'output.wav'
 
     # List all files in the folder
@@ -41,7 +44,6 @@ def generate_text_from_speech(audioBlob):
         file.save(os.path.join(file.filename))
 
     audio_buffer = BytesIO(audioBlob.read())
-    import subprocess
 
     # Define the FFmpeg command
     ffmpeg_command = [
@@ -65,7 +67,7 @@ def generate_text_from_speech(audioBlob):
     # You can now continue with your Python script using the converted 'output.wav' file.
 
     test_files = glob(
-        'C:\\Users\\dortemon\\Downloads\\FYP\\Familiar\\server\\output.wav')
+        './output.wav')
 
     batches = split_into_batches(test_files, batch_size=10)
     speech = prepare_model_input(read_batch(batches[0]), device=device)

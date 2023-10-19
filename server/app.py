@@ -25,13 +25,6 @@ def chatbot():
 def stt():
     try:
         audioBlob = request.files['audio']
-        # display the audioBlob
-        # audio_path = 'audio.wav'
-
-        # # Save the audioBlob as a WAV file with a specific sample rate (e.g., 22050 Hz)
-        # sample_rate = 22050
-        # wavfile.write(audio_path, sample_rate, audioBlob.read())
-
         text = generate_text_from_speech(audioBlob)
         return jsonify({'text': text}), 200
     except Exception as e:
