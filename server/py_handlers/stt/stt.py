@@ -21,7 +21,7 @@ def generate_text_from_speech(audioBlob):
     # import os
 
     # Replace with the path to the folder you want to work with
-    folder_path = './'
+    folder_path = '..\\server'
     extension_to_delete = 'blob.wav' and 'output.wav'
 
     # List all files in the folder
@@ -67,7 +67,7 @@ def generate_text_from_speech(audioBlob):
     # You can now continue with your Python script using the converted 'output.wav' file.
 
     test_files = glob(
-        './output.wav')
+        '..\\server\\output.wav')
 
     batches = split_into_batches(test_files, batch_size=10)
     speech = prepare_model_input(read_batch(batches[0]), device=device)
