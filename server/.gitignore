@@ -3,3 +3,6 @@
 
 # misc
 .env
+
+# audio cache
+output.wav
