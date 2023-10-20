@@ -1,0 +1,228 @@
+.about {
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .about .div {
+    background-color: #ffffff;
+    height: 1080px;
+    overflow: hidden;
+    position: relative;
+    width: 1920px;
+  }
+  
+  .about .footer {
+    background-color: transparent;
+    height: 156px;
+    left: 64px;
+    position: absolute;
+    top: 880px;
+    width: 1802px;
+  }
+  
+  .about .copyright-text {
+    color: #000000;
+    font-family: "Lato", Helvetica;
+    font-size: 25px;
+    font-weight: 500;
+    height: 30px;
+    left: 816px;
+    letter-spacing: -0.38px;
+    line-height: normal;
+    position: absolute;
+    text-align: center;
+    top: 126px;
+    white-space: nowrap;
+  }
+  
+  .about .facebook-icon {
+    height: 48px;
+    left: 793px;
+    position: absolute;
+    top: 56px;
+    width: 48px;
+  }
+  
+  .about .instagram-icon {
+    height: 49px;
+    left: 876px;
+    position: absolute;
+    top: 54px;
+    width: 50px;
+  }
+  
+  .about .twitter-icon {
+    height: 49px;
+    left: 958px;
+    position: absolute;
+    top: 54px;
+    width: 50px;
+  }
+  
+  .about .footer-divivder {
+    height: 2px;
+    left: 0;
+    position: absolute;
+    top: -2px;
+    width: 1800px;
+  }
+  
+  .about .content {
+    height: 321px;
+    left: 587px;
+    position: absolute;
+    top: 342px;
+    width: 756px;
+  }
+  
+  .about .title {
+    color: #000000;
+    font-family: "Montserrat", Helvetica;
+    font-size: 60px;
+    font-weight: 700;
+    left: 0;
+    letter-spacing: -0.9px;
+    line-height: 66.5px;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    white-space: nowrap;
+  }
+  
+  .about .dizzy-face {
+    height: 204px;
+    left: 275px;
+    position: absolute;
+    top: 117px;
+    width: 204px;
+  }
+  
+  .about .header {
+    background-color: transparent;
+    height: 148px;
+    left: 2px;
+    position: absolute;
+    top: 0;
+    width: 1922px;
+  }
+  
+  .about .overlap {
+    background-color: #ffffff;
+    height: 148px;
+    position: relative;
+    width: 1920px;
+  }
+  
+  .about .upper-divider {
+    height: 2px;
+    left: 60px;
+    position: absolute;
+    top: 145px;
+    width: 1800px;
+  }
+  
+  .about .familiar-logo {
+    color: #000000;
+    font-family: "Montserrat", Helvetica;
+    font-size: 65px;
+    font-weight: 900;
+    left: 60px;
+    letter-spacing: 0;
+    line-height: 66.5px;
+    position: absolute;
+    top: 50px;
+    white-space: nowrap;
+    width: 309px;
+  }
+  
+  .about .nav-buttons {
+    height: 68px;
+    left: 1289px;
+    position: absolute;
+    top: 52px;
+    width: 577px;
+  }
+  
+  .about .login-selection {
+    height: 67px;
+    left: 450px;
+    position: absolute;
+    top: 0;
+    width: 123px;
+  }
+  
+  .about .overlap-group {
+    height: 67px;
+    position: relative;
+    width: 121px;
+  }
+  
+  .about .login-button {
+    background-color: #f7a8b5;
+    border-radius: 11px;
+    box-shadow: 0px 2.5px 5px 2px #00000040;
+    height: 50px;
+    left: 0;
+    position: absolute;
+    top: 10px;
+    width: 121px;
+  }
+  
+  .about .text-wrapper {
+    color: #ffffffd9;
+    font-family: "Lato", Helvetica;
+    font-size: 25px;
+    font-weight: 900;
+    left: 29px;
+    letter-spacing: 0.38px;
+    line-height: 66.5px;
+    position: absolute;
+    top: 0;
+    width: 82px;
+  }
+  
+  .about .text-wrapper-2 {
+    color: #000000;
+    font-family: "Lato", Helvetica;
+    font-size: 25px;
+    font-weight: 700;
+    left: 291px;
+    letter-spacing: 0.38px;
+    line-height: 66.5px;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: 104px;
+  }
+  
+  .about .text-wrapper-3 {
+    color: #000000;
+    font-family: "Lato", Helvetica;
+    font-size: 25px;
+    font-weight: 700;
+    left: 146px;
+    letter-spacing: 0.38px;
+    line-height: 66.5px;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: 121px;
+  }
+  
+  .about .text-wrapper-4 {
+    color: #000000;
+    font-family: "Lato", Helvetica;
+    font-size: 25px;
+    font-weight: 700;
+    left: 0;
+    letter-spacing: 0.38px;
+    line-height: 66.5px;
+    position: absolute;
+    text-align: center;
+    top: 2px;
+    width: 121px;
+  }
+  

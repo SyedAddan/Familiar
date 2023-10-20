@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  MDBInput,
+  MDBRow,
+  MDBBtn,
+} from "mdb-react-ui-kit";
 import axios from "axios";
+
+import "mdb-react-ui-kit/dist/css/mdb.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import {
   PiPaperPlaneTiltBold,
@@ -7,15 +16,39 @@ import {
   PiStopCircleBold,
 } from "react-icons/pi";
 
-import "./ChatBot.css";
+import "./style.css";
 
 const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [avatarName, setAvatarName] = useState("");
+  const [avatarContext, setAvatarContext] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const messageContainerRef = useRef(null);
   const audioStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+
+
+  const handleAvatarSubmissions = async (e) => {
+    e.preventDefault();
+    if (document.getElementById("avatarName").value === "") {
+      return;
+    }
+    if (document.getElementById("avatarContext").value === "") {
+      return;
+    }
+    console.log("Yo my dude")
+    setAvatarName(document.getElementById("avatarName").value);
+    setAvatarContext(document.getElementById("avatarContext").value);
+    await axios.post(
+      `/avatarInputs`, { avatarName: document.getElementById("avatarName").value, avatarContext: document.getElementById("avatarContext").value}
+    ).then((response) => {
+      console.log(response.data);
+    }).catch((error) => {
+      console.error("Error fetching avatar inputs:", error);
+    });
+  }
+
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -109,11 +142,15 @@ const ChatBot = () => {
     const audioBlob = event.data;
 
     axios
-      .post(`/stt`, {"audio": audioBlob}, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
+      .post(
+        `/stt`,
+        { audio: audioBlob },
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      )
       .then((response) => {
         console.log(response.data);
         const sttText = { text: response.data.text, type: "user" };
@@ -144,43 +181,97 @@ const ChatBot = () => {
 
   return (
     <div className="chatbot">
-      <header className="chatbot-header">
-        <h1>Familiar</h1>
-      </header>
-      <div className="chatbot-body">
-        <div className="chatbot-content">
-          <div className="avatar-section">
-            <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
-          </div>
-          <div className="transcript-section" ref={messageContainerRef}>
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.type}`}>
-                {message.text}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="chatbot-input">
-          <input
-            type="text"
-            placeholder="Type a message..."
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendMessage();
-            }}
+      <header className="header">
+        <div className="overlap">
+          <img
+            className="upper-divider"
+            alt="Upper divider"
+            src="/img/about/upper-divider.svg"
           />
-          <button className="send-button" onClick={handleSendMessage}>
-            <PiPaperPlaneTiltBold />
-          </button>
-          <button
-            className={`record-button ${isRecording ? "recording" : ""}`}
-            onClick={handleToggleRecording}
-          >
-            {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
-          </button>
+          <Link to="/">
+            <div className="familiar-logo">Familiar</div>
+          </Link>
+          <div className="nav-buttons">
+            <Link to="/login">
+              <div className="login-selection">
+                <div className="overlap-group">
+                  <div className="login-button" />
+                  <div className="text-wrapper">Login</div>
+                </div>
+              </div>
+            </Link>
+            <Link to="/pricing">
+              <div className="text-wrapper-2">Pricing</div>
+            </Link>
+            <Link to="/contact">
+              <div className="text-wrapper-3">Contact</div>
+            </Link>
+            <Link to="/about">
+              <div className="text-wrapper-4">About</div>
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
+      {avatarName === "" || avatarContext === "" ? (
+        <div className="avatar-inputs">
+          <form>
+            <MDBRow>
+              <MDBInput
+                wrapperClass="mb-4"
+                id="avatarName"
+                label="Avatar Name"
+                onSubmit={(e) => e.preventDefault()}
+                onKeyDown={(e) => {if (e.key === "Enter") handleAvatarSubmissions(e)}}
+              />
+              <MDBInput wrapperClass="mb-4" id="avatarContext" textarea rows={4} label="Your Relationship with the Avatar..." onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => {if (e.key === "Enter") handleAvatarSubmissions(e)}}
+              />
+              <MDBBtn
+                type="submit"
+                block
+                onClick={(e) => handleAvatarSubmissions(e)}
+                onSubmit={(e) => handleAvatarSubmissions(e)}
+              >
+                Chat
+              </MDBBtn>
+            </MDBRow>
+          </form>
+        </div>
+      ) : (
+        <div className="chatbot-body">
+          <div className="chatbot-content">
+            <div className="avatar-section">
+              <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
+            </div>
+            <div className="transcript-section" ref={messageContainerRef}>
+              {messages.map((message, index) => (
+                <div key={index} className={`message ${message.type}`}>
+                  {message.text}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="chatbot-input">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSendMessage();
+              }}
+            />
+            <button className="send-button" onClick={handleSendMessage}>
+              <PiPaperPlaneTiltBold />
+            </button>
+            <button
+              className={`record-button ${isRecording ? "recording" : ""}`}
+              onClick={handleToggleRecording}
+            >
+              {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
+            </button>
+          </div>
+        </div>
+      )}
       <footer className="chatbot-footer">©️ 2023 Familiar</footer>
     </div>
   );
