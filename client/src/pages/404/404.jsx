@@ -3,55 +3,55 @@ import { Link } from "react-router-dom";
 
 import "./style.css";
 
-const Contact = () => {
+const NotFound = () => {
   return (
-    <div className="about">
+    <div className="element-page">
       <div className="div">
         <footer className="footer">
           <div className="copyright-text">© Familiar 2023</div>
-          <a href="/contact">
+          <a href="/404">
             <img
               className="facebook-icon"
               alt="Facebook icon"
-              src="/img/about/facebook-icon.png"
+              src="/img/404/facebook-icon.png"
             />
           </a>
-          <a href="/contact">
+          <a href="/404">
             <img
               className="instagram-icon"
               alt="Instagram icon"
-              src="/img/about/instagram-icon.svg"
+              src="/img/404/instagram-icon.svg"
             />
           </a>
-          <a href="/contact">
+          <a href="/404">
             <img
               className="twitter-icon"
               alt="Twitter icon"
-              src="/img/about/twitter-icon.png"
+              src="/img/404/twitter-icon.png"
             />
           </a>
-          <a href="/contact">
+          <a href="/404">
             <img
               className="footer-divivder"
               alt="Footer divivder"
-              src="/img/about/upper-divider.svg"
+              src="/img/404/upper-divider.svg"
             />
           </a>
         </footer>
         <div className="content">
-          <div className="title">Still Building This Page!!!</div>
           <img
-            className="dizzy-face"
-            alt="Dizzy face"
-            src="/img/about/dizzy-face.png"
+            className="thinking-face"
+            alt="Thinking face"
+            src="/img/404/thinking-face.png"
           />
+          <p className="title">Please check the path again!</p>
         </div>
         <header className="header">
           <div className="overlap">
             <img
               className="upper-divider"
               alt="Upper divider"
-              src="/img/about/upper-divider.svg"
+              src="/img/404/upper-divider.svg"
             />
             <Link to="/">
               <div className="familiar-logo">Familiar</div>
@@ -82,4 +82,4 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+export default NotFound;

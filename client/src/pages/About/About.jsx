@@ -3,34 +3,34 @@ import { Link } from "react-router-dom";
 
 import "./style.css";
 
-const Contact = () => {
+const About = () => {
   return (
     <div className="about">
       <div className="div">
         <footer className="footer">
           <div className="copyright-text">© Familiar 2023</div>
-          <a href="/contact">
+          <a href="/about">
             <img
               className="facebook-icon"
               alt="Facebook icon"
               src="/img/about/facebook-icon.png"
             />
           </a>
-          <a href="/contact">
+          <a href="/about">
             <img
               className="instagram-icon"
               alt="Instagram icon"
               src="/img/about/instagram-icon.svg"
             />
           </a>
-          <a href="/contact">
+          <a href="/about">
             <img
               className="twitter-icon"
               alt="Twitter icon"
               src="/img/about/twitter-icon.png"
             />
           </a>
-          <a href="/contact">
+          <a href="/about">
             <img
               className="footer-divivder"
               alt="Footer divivder"
@@ -82,4 +82,4 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+export default About;
