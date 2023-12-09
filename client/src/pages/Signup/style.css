@@ -76,6 +76,7 @@
     position: absolute;
     top: 332px;
     width: 629px;
+    display: flex;
   }
   
   .sign-up .text-wrapper {
@@ -324,16 +325,16 @@
     width: 623px;
   }
   
-  .sign-up .email-wrapper {
+  .sign-up .text-field-wrapper {
     background-color: #ffffff;
     border: 0.5px solid;
     border-color: #000000;
     border-radius: 16px;
     color: #000000;
-    font-family: "Lato", Helvetica;
+    font-family: "Montserrat", Helvetica;
     font-size: 25px;
     font-weight: 600;
-    height: 48px;
+    height: 48px min;
     letter-spacing: -0.38px;
     line-height: 66.5px;
     padding: 0;
