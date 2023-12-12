@@ -5,12 +5,24 @@ import IPython
 import sys
 import os
 import io
+import subprocess
 from scipy.io.wavfile import write
 from os.path import exists, join, basename, splitext
+import os
+
+
 project_name = "Real_Time_Voice_Cloning"
+folder_path = 'saved_models\\default'
+if not os.path.exists(folder_path):
+    subprocess.run(f'mkdir saved_models\\default', shell=True)
+    subprocess.run(
+        f'cd saved_models/default/ && gdown https://drive.google.com/uc?id=1q8mEGwCkFy23KZsinbuvdKAQLqNKbYf1', shell=True)
+    subprocess.run(
+        f'cd saved_models/default/ && gdown https://drive.google.com/uc?id=1EqFMIbvxffxtjiVrtykroF6_mUh-5Z3s', shell=True)
+    subprocess.run(
+        f'cd saved_models/default/ && gdown https://drive.google.com/uc?id=1cf2NO6FtI0jDuy8AV3Xgn6leO6dHjIgu', shell=True)
 if True:
     sys.path.append(project_name)
-    # print(1)
     from pathlib import Path
     from vocoder import inference as vocoder
     from encoder import inference as encoder
