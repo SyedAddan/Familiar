@@ -19,9 +19,7 @@ conversation = ConversationChain(
 )
 
 
-def generate_chatbot_response(message, avatarInputs):
-    avatarName = avatarInputs["avatarName"]
-    avatarContext = avatarInputs["avatarContext"]
-    message = f"Your Name is {avatarName}, you have the following relationship with the human being: {avatarContext}. If you already know this information then ignore it and just respond this query of the human: {message} and respond to it while keeping in kind the previous knowledge. If you didn't know this information then keep this in your mind and hold on it and respond to this query of the human: {message} and the others to come keeping in mind the context"
+def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdditional):
+    message = f"Your Name is {avatarName}, and you have the following relationship with the human being: {avatarRelationship} and the user has provided this additional information about you: {avatarAdditional}. If you already know this information then ignore it and just respond to this query of the human: {message} and respond to it while keeping in kind the previous knowledge. If you didn't know this information then keep this in mind and hold on to it and respond to this query of the human: {message} and the others to come keeping in mind the context. Do not deviate from the context and do not answer questions other than the relevant context or message provided. Don't justify your answers. Don't give information not mentioned in the CONTEXT INFORMATION."
     res = conversation.predict(input=message)
     return res

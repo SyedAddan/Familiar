@@ -1,10 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  MDBInput,
-  MDBRow,
-  MDBBtn,
-} from "mdb-react-ui-kit";
 import axios from "axios";
 
 import "mdb-react-ui-kit/dist/css/mdb.min.css";
@@ -18,35 +13,38 @@ import {
 
 import "./style.css";
 
+
+
 const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [avatarName, setAvatarName] = useState("");
-  const [avatarContext, setAvatarContext] = useState("");
+  const [avatarRelation, setAvatarRelation] = useState("");
+  const [avatarAdditional, setAvatarAdditional] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const messageContainerRef = useRef(null);
   const audioStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
 
 
-  const handleAvatarSubmissions = async (e) => {
-    e.preventDefault();
-    if (document.getElementById("avatarName").value === "") {
-      return;
-    }
-    if (document.getElementById("avatarContext").value === "") {
-      return;
-    }
-    console.log("Yo my dude")
-    setAvatarName(document.getElementById("avatarName").value);
-    setAvatarContext(document.getElementById("avatarContext").value);
-    await axios.post(
-      `/avatarInputs`, { avatarName: document.getElementById("avatarName").value, avatarContext: document.getElementById("avatarContext").value}
-    ).then((response) => {
-      console.log(response.data);
-    }).catch((error) => {
-      console.error("Error fetching avatar inputs:", error);
-    });
+  const getStartupStuff = (e) => {
+    localStorage.setItem("userName", "syedaddan")
+    const userName = localStorage.getItem("userName")
+    axios
+      .get('/getUser', {
+        params: {
+          userName: userName
+        }
+      })
+      .then((response) => {
+        console.log(response.data);
+        setAvatarName(response.data.avatarName);
+        setAvatarRelation(response.data.relationship);
+        setAvatarAdditional(response.data.additional);
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      });
   }
 
 
@@ -59,7 +57,7 @@ const ChatBot = () => {
     const userMessage = { text: input, type: "user" };
     addMessage(userMessage);
     setInput("");
-    await getResponse(input);
+    await getResponse(input, avatarName, avatarRelation, avatarAdditional);
   };
 
   const addMessage = (message) => {
@@ -67,9 +65,9 @@ const ChatBot = () => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const getResponse = async (message) => {
+  const getResponse = async (message, avatarName, avatarRelation, avatarAdditional) => {
     await axios
-      .post(`/chatbot`, { message: message })
+      .post(`/chatbot`, { message: message, avatarName: avatarName, avatarRelation: avatarRelation, avatarAdditional: avatarAdditional })
       .then((response) => {
         console.log(response.data);
         const chatbotResponse = {
@@ -155,7 +153,7 @@ const ChatBot = () => {
         console.log(response.data);
         const sttText = { text: response.data.text, type: "user" };
         addMessage(sttText);
-        getResponse(sttText.text);
+        getResponse(sttText.text, avatarName, avatarRelation, avatarAdditional);
       })
       .catch((error) => {
         console.error("Error fetching STT response:", error);
@@ -178,6 +176,10 @@ const ChatBot = () => {
         messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    getStartupStuff();
+  }, []);
 
   return (
     <div className="chatbot">
@@ -212,31 +214,6 @@ const ChatBot = () => {
           </div>
         </div>
       </header>
-      {avatarName === "" || avatarContext === "" ? (
-        <div className="avatar-inputs">
-          <form>
-            <MDBRow>
-              <MDBInput
-                wrapperClass="mb-4"
-                id="avatarName"
-                label="Avatar Name"
-                onSubmit={(e) => e.preventDefault()}
-                onKeyDown={(e) => {if (e.key === "Enter") handleAvatarSubmissions(e)}}
-              />
-              <MDBInput wrapperClass="mb-4" id="avatarContext" textarea rows={4} label="Your Relationship with the Avatar..." onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => {if (e.key === "Enter") handleAvatarSubmissions(e)}}
-              />
-              <MDBBtn
-                type="submit"
-                block
-                onClick={(e) => handleAvatarSubmissions(e)}
-                onSubmit={(e) => handleAvatarSubmissions(e)}
-              >
-                Chat
-              </MDBBtn>
-            </MDBRow>
-          </form>
-        </div>
-      ) : (
         <div className="chatbot-body">
           <div className="chatbot-content">
             <div className="avatar-section">
@@ -271,7 +248,6 @@ const ChatBot = () => {
             </button>
           </div>
         </div>
-      )}
       <footer className="chatbot-footer">©️ 2023 Familiar</footer>
     </div>
   );
