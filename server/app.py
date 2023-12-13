@@ -1,10 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import time
 from scipy.io import wavfile
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from pathlib import Path
+import io
+import soundfile as sf
+
 from py_handlers.chatbot.chatbot import generate_chatbot_response
 from py_handlers.stt.stt import generate_text_from_speech
+from py_handlers.tts.tts import synthesize
 
 app = Flask(__name__)
 CORS(app)
@@ -81,16 +86,22 @@ def chatbot():
     try:
         data = request.get_json()
         message = data["message"]
+        userName = data["userName"]
         avatarName = data["avatarName"]
         avatarRelationship = data["avatarRelation"]
         avatarAdditional = data["avatarAdditional"]
-        print(data)
         start = time.time()
         res = generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdditional)
-        # tts
+        voice_path = Path.absolute(User.query.filter_by(username=userName, avatarName=avatarName).first().audio_path)
+        sr, wav = synthesize(res, voice_path)
+        
+        wav_io = io.BytesIO()
+        sf.write(wav_io, wav, sr, format='WAV')
+        wav_io.seek(0)
         end = time.time()
+        
         responceTime = end - start
-        return jsonify({"responseText": res, "responceTime": responceTime}), 200
+        return jsonify({"responseText": res, 'audio': send_file(wav_io, as_attachment=True, download_name='generated_audio.wav'), "responceTime": responceTime}), 200
     except Exception as e:
         print(e)
         return jsonify({"responseText": "Something went wrong", "responceTime": 0}), 500
