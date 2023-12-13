@@ -18,10 +18,12 @@ import "./style.css";
 const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [userName, setUserName] = useState("");
   const [avatarName, setAvatarName] = useState("");
   const [avatarRelation, setAvatarRelation] = useState("");
   const [avatarAdditional, setAvatarAdditional] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [audioContext, setAudioContext] = useState(null);
   const messageContainerRef = useRef(null);
   const audioStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -29,7 +31,7 @@ const ChatBot = () => {
 
   const getStartupStuff = (e) => {
     localStorage.setItem("userName", "syedaddan")
-    const userName = localStorage.getItem("userName")
+    setUserName(localStorage.getItem("userName"))
     axios
       .get('/getUser', {
         params: {
@@ -46,6 +48,11 @@ const ChatBot = () => {
         console.error("Error fetching user data:", error);
       });
   }
+
+  const initializeAudioContext = () => {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    setAudioContext(context);
+  };
 
 
   const handleInputChange = (e) => {
@@ -67,13 +74,20 @@ const ChatBot = () => {
 
   const getResponse = async (message, avatarName, avatarRelation, avatarAdditional) => {
     await axios
-      .post(`/chatbot`, { message: message, avatarName: avatarName, avatarRelation: avatarRelation, avatarAdditional: avatarAdditional })
+      .post(`/chatbot`, { message: message, userName: userName, avatarName: avatarName, avatarRelation: avatarRelation, avatarAdditional: avatarAdditional })
       .then((response) => {
-        console.log(response.data);
+        const arrayBuffer = response.audio.arrayBuffer();
+        const audioBuffer = audioContext.decodeAudioData(arrayBuffer);
         const chatbotResponse = {
           text: response.data.responseText,
           type: "bot",
         };
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        source.start();
+
         addMessage(chatbotResponse);
       })
       .catch((error) => {
@@ -179,6 +193,7 @@ const ChatBot = () => {
 
   useEffect(() => {
     getStartupStuff();
+    initializeAudioContext();
   }, []);
 
   return (
