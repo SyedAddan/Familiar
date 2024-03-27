@@ -28,7 +28,7 @@ const Home = () => {
                 <img className="vector-2" alt="Vector" src="/img/home/vector-2.svg" />
                 <img className="vector-3" alt="Vector" src="/img/home/vector-1.svg" />
                 <img className="vector-4" alt="Vector" src="/img/home/vector.svg" />
-                <img className="feature-divider" alt="Feature divider" src="/img/home/upper-divider.svg" />
+                {/* <img className="feature-divider" alt="Feature divider" src="/img/home/upper-divider.svg" /> */}
                 <p className="body-text">A Push Towards A Much Healthier Life</p>
               </div>
               <img className="vector-5" alt="Vector" src="/img/home/vector-4.svg" />
@@ -75,7 +75,7 @@ const Home = () => {
           </div>
           <header className="header">
             <div className="overlap-4">
-              <img className="upper-divider" alt="Upper divider" src="/img/home/upper-divider.svg" />
+              {/* <img className="upper-divider" alt="Upper divider" src="/img/home/upper-divider.svg" /> */}
               <Link to="/">
                 <div className="familiar-logo">Familiar</div>
               </Link>
@@ -83,7 +83,7 @@ const Home = () => {
                 <Link to="/login">
                   <div className="login-selection">
                     <div className="overlap-group-4">
-                      <div className="login-button" />
+                      <div className="  login-button" />
                       <div className="text-wrapper-2">Login</div>
                     </div>
                   </div>

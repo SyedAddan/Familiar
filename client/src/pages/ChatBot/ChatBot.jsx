@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
 
 import "mdb-react-ui-kit/dist/css/mdb.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -18,41 +18,32 @@ import "./style.css";
 const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-  const [userName, setUserName] = useState("");
-  const [avatarName, setAvatarName] = useState("");
-  const [avatarRelation, setAvatarRelation] = useState("");
-  const [avatarAdditional, setAvatarAdditional] = useState("");
+  // const [userName, setUserName] = useState("syedaddan");
+  // const [avatarName, setAvatarName] = useState("");
+  // const [avatarRelation, setAvatarRelation] = useState("");
+  // const [avatarAdditional, setAvatarAdditional] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [audioContext, setAudioContext] = useState(null);
+  // const [audioContext, setAudioContext] = useState(null);
   const messageContainerRef = useRef(null);
   const audioStreamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
 
 
-  const getStartupStuff = (e) => {
-    localStorage.setItem("userName", "syedaddan")
-    setUserName(localStorage.getItem("userName"))
-    axios
-      .get('/getUser', {
-        params: {
-          userName: userName
-        }
-      })
-      .then((response) => {
-        console.log(response.data);
-        setAvatarName(response.data.avatarName);
-        setAvatarRelation(response.data.relationship);
-        setAvatarAdditional(response.data.additional);
-      })
-      .catch((error) => {
-        console.error("Error fetching user data:", error);
-      });
-  }
-
-  const initializeAudioContext = () => {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    setAudioContext(context);
-  };
+  // const getStartupStuff = async (e) => {
+  //   setUserName("syedaddan");
+  //   axios
+  //     .get(`/getUser/?userName=${userName}`)
+  //     .then((response) => {
+  //       console.log(response.data);
+  //       setAvatarName(response.data.avatarName);
+  //       setAvatarRelation(response.data.relationship);
+  //       setAvatarAdditional(response.data.additional);
+  //       setMessages(...response.data.messages);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching user data:", error);
+  //     });
+  // }
 
 
   const handleInputChange = (e) => {
@@ -64,7 +55,7 @@ const ChatBot = () => {
     const userMessage = { text: input, type: "user" };
     addMessage(userMessage);
     setInput("");
-    await getResponse(input, avatarName, avatarRelation, avatarAdditional);
+    await getResponse(input);
   };
 
   const addMessage = (message) => {
@@ -72,21 +63,19 @@ const ChatBot = () => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const getResponse = async (message, avatarName, avatarRelation, avatarAdditional) => {
+  const getResponse = async (message) => {
     await axios
-      .post(`/chatbot`, { message: message, userName: userName, avatarName: avatarName, avatarRelation: avatarRelation, avatarAdditional: avatarAdditional })
+      .post(
+        `/chatbot`, {
+          message: message,
+          userName: 'syedaddan'
+        }
+      )
       .then((response) => {
-        const arrayBuffer = response.audio.arrayBuffer();
-        const audioBuffer = audioContext.decodeAudioData(arrayBuffer);
         const chatbotResponse = {
           text: response.data.responseText,
           type: "bot",
         };
-
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start();
 
         addMessage(chatbotResponse);
       })
@@ -167,7 +156,7 @@ const ChatBot = () => {
         console.log(response.data);
         const sttText = { text: response.data.text, type: "user" };
         addMessage(sttText);
-        getResponse(sttText.text, avatarName, avatarRelation, avatarAdditional);
+        getResponse(sttText.text);
       })
       .catch((error) => {
         console.error("Error fetching STT response:", error);
@@ -177,7 +166,7 @@ const ChatBot = () => {
         };
         addMessage(sttText);
         const botText = {
-          text: "Sorry, something went wrong.",
+          text: "Seems like your message wasn't send properly. Please, try again!.",
           type: "bot",
         };
         addMessage(botText);
@@ -191,10 +180,9 @@ const ChatBot = () => {
     }
   }, [messages]);
 
-  useEffect(() => {
-    getStartupStuff();
-    initializeAudioContext();
-  }, []);
+  // useEffect(() => {
+  //   getStartupStuff();
+  // }, []);
 
   return (
     <div className="chatbot">
@@ -263,7 +251,6 @@ const ChatBot = () => {
             </button>
           </div>
         </div>
-      <footer className="chatbot-footer">©️ 2023 Familiar</footer>
     </div>
   );
 };
