@@ -9,8 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from utils.tts.tts.tts import synthesize
 from utils.llm.llm import generate_chatbot_response
+from scipy.io.wavfile import write
 # from utils.stt.stt import generate_text_from_speech
 
 
@@ -20,6 +21,7 @@ def handle_text_stream(res_stream):
             current_response = event["choices"][0].delta.content
             yield "data: " + current_response + "\n\n"
 
+
 def messages_to_db_form(messages):
     str = ""
     for message in messages:
@@ -27,30 +29,36 @@ def messages_to_db_form(messages):
             " Content: " + message["content"] + "/n"
     return str
 
+
 def messages_from_db_form(message_str):
     if not message_str:
         return []
     else:
         messages = []
         for line in message_str.split("/n"):
-            if line == "": continue
+            if line == "":
+                continue
             role = line.split("Role: ")[1].split(" Content: ")[0].strip()
             content = line.split("Role: ")[1].split(" Content: ")[1].strip()
             messages.append({"role": role, "content": content})
         return messages
 
+
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = 'user'
     email = Column(String(120), unique=True, nullable=False)
-    username = Column(String(80), unique=True, nullable=False, primary_key=True)
+    username = Column(String(80), unique=True,
+                      nullable=False, primary_key=True)
     avatarName = Column(String(80), unique=True, nullable=False)
     relationship = Column(String(1024), unique=False, nullable=False)
     additional = Column(String(1024), unique=False, nullable=True)
     password = Column(String(120), nullable=False)
     audio_path = Column(String(255), nullable=False)
     messages = Column(String(10000), nullable=True)
+
 
 app = FastAPI()
 
@@ -63,6 +71,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.post('/signupInputs')
 async def signUpHandler(email: str, username: str, avatarName: str, relationship: str, additional: str, password: str, confirmPassword: str, voice: UploadFile = File(...)):
@@ -85,6 +94,7 @@ async def signUpHandler(email: str, username: str, avatarName: str, relationship
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
+
 @app.get('/getUser')
 async def getUser(userName: str):
     try:
@@ -105,10 +115,12 @@ class ChatbotRequest(BaseModel):
     message: str
     userName: str
 
+
 @app.post('/chatbot')
 async def chatbot(request_data: ChatbotRequest):
     try:
-        userData = db.query(User).filter_by(username=request_data.userName).first()
+        userData = db.query(User).filter_by(
+            username=request_data.userName).first()
         avatarName = userData.avatarName
         avatarRelationship = userData.relationship
         avatarAdditional = userData.additional
@@ -120,9 +132,13 @@ async def chatbot(request_data: ChatbotRequest):
             avatarAdditional,
             messages
         )
+        sr, wav = synthesize(
+            response, "C:\\Users\\dortemon\\Downloads\\FYP\\Familiar\\server\\voices\\Recording.wav")
+        write("voices/response.wav", sr, wav)
+        print("Audio saved ")
         userData.messages = messages_to_db_form(messages)
         db.commit()
-        
+
         return {'responseText': response}
     except Exception as e:
         print(e)
@@ -145,14 +161,6 @@ if __name__ == '__main__':
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     uvicorn.run(app, host="0.0.0.0", port=5000)
-
-
-
-
-
-
-
-
 
 
 # import io
@@ -284,7 +292,7 @@ if __name__ == '__main__':
 #         res_stream = generate_chatbot_response(
 #             message,
 #             avatarName,
-#             avatarRelationship, 
+#             avatarRelationship,
 #             avatarAdditional,
 #             messages
 #         )
@@ -294,7 +302,7 @@ if __name__ == '__main__':
 #         # wav_io = io.BytesIO()
 #         # sf.write(wav_io, wav, sr, format='WAV')
 #         # wav_io.seek(0)
-        
+
 #         # return jsonify({"responseText": res, 'audio': send_file(wav_io, as_attachment=True, download_name='generated_audio.wav'), "responceTime": responceTime}), 200
 #         return Response(handle_text_stream(res_stream), mimetype='text/plain')
 #     except Exception as e:
