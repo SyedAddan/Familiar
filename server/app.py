@@ -114,7 +114,7 @@ def login(username: str, password: str):
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-@app.get('/getUser')
+@app.post('/getUser')
 async def getUser(userName: str):
     try:
         user = db.query(User).filter_by(username=userName).first()
@@ -129,21 +129,16 @@ async def getUser(userName: str):
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-
-class ChatbotRequest(BaseModel):
-    message: str
-    userName: str
-
 @app.post('/chatbot')
-async def chatbot(request_data: ChatbotRequest):
+async def chatbot(message: str, userName: str):
     try:
-        userData = db.query(User).filter_by(username=request_data.userName).first()
+        userData = db.query(User).filter_by(username=userName).first()
         avatarName = userData.avatarName
         avatarRelationship = userData.relationship
         avatarAdditional = userData.additional
         messages = messages_from_db_form(userData.messages)
         response, messages = generate_chatbot_response(
-            request_data.message,
+            message,
             avatarName,
             avatarRelationship,
             avatarAdditional,
