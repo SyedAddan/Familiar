@@ -1,79 +1,157 @@
 import React from "react";
+// import { useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+// import axios from "axios";
 
 import "./style.css";
 
-const handleInputs = () => {
-  const audioInput = document.getElementById("voiceInput");
-  const audioFile = audioInput.files[0];
+// function convertToAudioBlob(file) {
+//   return new Promise((resolve, reject) => {
+//     const reader = new FileReader();
 
-  if (audioFile) {
-    convertToAudioBlob(audioFile)
-      .then((audioBlob) => {
-        const formData = new FormData();
-        formData.append("email", document.getElementById("emailInput").value);
-        formData.append("username", document.getElementById("usernameInput").value);
-        formData.append("avatarName", document.getElementById("avatarNameInput").value);
-        formData.append("relationship", document.getElementById("relationshipInput").value);
-        formData.append("additional", document.getElementById("additionalInput").value);
-        formData.append("password", document.getElementById("passwordInput").value);
-        formData.append("confirmPassword", document.getElementById("confirmPasswordInput").value);
-        formData.append("voice", audioBlob, "voice.wav");
-        sendToServer(formData);
-      })
-      .catch((err) => {
-        console.error("Error converting to AudioBlob:", err);
-      });
-  }
-};
+//     reader.onload = function () {
+//       const audioContext = new (window.AudioContext ||
+//         window.webkitAudioContext)();
+//       audioContext.decodeAudioData(reader.result, function (buffer) {
+//         const source = audioContext.createBufferSource();
+//         source.buffer = buffer;
 
-function convertToAudioBlob(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+//         const scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
+//         scriptNode.onaudioprocess = function (event) {
+//           const audioData = event.inputBuffer.getChannelData(0);
+//           const audioBlob = new Blob([audioData], { type: "audio/wav" });
+//           resolve(audioBlob);
+//         };
 
-    reader.onload = function () {
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
-      audioContext.decodeAudioData(reader.result, function (buffer) {
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
+//         source.connect(scriptNode);
+//         scriptNode.connect(audioContext.destination);
+//         source.start();
+//       });
+//     };
 
-        const scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
-        scriptNode.onaudioprocess = function (event) {
-          const audioData = event.inputBuffer.getChannelData(0);
-          const audioBlob = new Blob([audioData], { type: "audio/wav" });
-          resolve(audioBlob);
-        };
+//     reader.readAsArrayBuffer(file);
+//   });
+// }
 
-        source.connect(scriptNode);
-        scriptNode.connect(audioContext.destination);
-        source.start();
-      });
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-const sendToServer = (formData) => {
-  const config = {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  };
-  axios
-    .post("/signupInputs", formData, config)
-    .then((response) => {
-      console.log("Server response:", response.data);
-      window.location.href = "/chat";
-    })
-    .catch((error) => {
-      console.error("Error sending to server:", error);
-    });
-};
+// const sendToServer = (formData) => {
+//   const config = {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   };
+//   axios
+//     .post("/signupInputs", formData, config)
+//     .then((response) => {
+//       console.log("Server response:", response.data);
+//       window.location.href = "/chat";
+//     })
+//     .catch((error) => {
+//       console.error("Error sending to server:", error);
+//     });
+// };
 
 const Signup = () => {
+  // const [audioBlob, setAudioBlob] = useState(null);
+
+  const handleInputs = async () => {
+    // const formData = new FormData();
+    // formData.append("email", document.getElementById("emailInput").value);
+    // formData.append("username", document.getElementById("usernameInput").value);
+    // formData.append(
+    //   "avatarName",
+    //   document.getElementById("avatarNameInput").value
+    // );
+    // formData.append(
+    //   "relationship",
+    //   document.getElementById("relationshipInput").value
+    // );
+    // formData.append(
+    //   "additional",
+    //   document.getElementById("additionalInput").value
+    // );
+    // formData.append("password", document.getElementById("passwordInput").value);
+    // formData.append(
+    //   "confirmPassword",
+    //   document.getElementById("confirmPasswordInput").value
+    // );
+
+    // console.log("Form data:", formData);
+    
+    await fetch("/signup", {
+      method: "POST",
+      body: {
+        email: document.getElementById("emailInput").value,
+        username: document.getElementById("usernameInput").value,
+        avatarName: document.getElementById("avatarNameInput").value,
+        relationship: document.getElementById("relationshipInput").value,
+        additional: document.getElementById("additionalInput").value,
+        password: document.getElementById("passwordInput").value,
+        confirmPassword: document.getElementById("confirmPasswordInput").value,
+      },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }).then((response) => {
+      console.log("Server response:", response);
+      uploadAudio();
+      // window.location.href = "/login";
+    }).catch((error) => {
+      console.error("Error sending to server:", error);
+    });
+  };
+
+  const uploadAudio = async () => {
+    const formData = new FormData();
+    formData.append("audio", document.getElementById("voiceInput").files[0]);
+    await fetch("/uploadAudio", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }).then((response) => {
+      console.log("Server response:", response);
+    }).catch((error) => {
+      console.error("Error sending to server:", error);
+    });
+  }
+
+  // const handleSubmit = async (formData) => {
+    // try {
+    //   const response = await axios.post("/signupInputs", formData, {
+    //     headers: {
+    //       "Content-Type": "multipart/form-data",
+    //     },
+    //   });
+    //   console.log("Server response:", response.data);
+    //   window.location.href = "/login";
+    // } catch (error) {
+    //   console.error("Error sending to server:", error);
+    // }
+  // };
+
+  // const handleAudioInputChange = (event) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     setAudioBlob(file);
+  //     convertToWav(file);
+  //   }
+  // };
+
+  // const convertToWav = (file) => {
+  //   const reader = new FileReader();
+  //   reader.onload = () => {
+  //     const audioContext = new (window.AudioContext ||
+  //       window.webkitAudioContext)();
+  //     audioContext.decodeAudioData(reader.result, (buffer) => {
+  //       const audioData = buffer.getChannelData(0);
+  //       const audioBlob = new Blob([audioData], { type: "audio/wav" });
+  //       setAudioBlob(audioBlob);
+  //     });
+  //   };
+  //   reader.readAsArrayBuffer(file);
+  // };
+
   return (
     <div className="sign-up">
       <div className="div">
@@ -191,7 +269,8 @@ const Signup = () => {
                   className="text-field-wrapper"
                   placeholder="Voice of the Avatar*"
                   type="file"
-                  accept="audio/*"
+                  // accept="audio/*"
+                  // onChange={handleAudioInputChange}
                   required
                 />
               </div>

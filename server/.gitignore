@@ -1,3 +1,6 @@
+/__pycache__
+
+
 # misc
 .env
 
@@ -7,4 +10,4 @@ blob.wav
 
 avatarInputs.txt
 
-/__pycache__/*
+test.ipynb
