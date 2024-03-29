@@ -79,6 +79,12 @@
     align-self: flex-start;
 }
 
+.message.system {
+    background-color: #ccfcff;
+    color: #333;
+    align-self: flex-start;
+}
+
 .chatbot-input {
     display: flex;
     justify-content: center;

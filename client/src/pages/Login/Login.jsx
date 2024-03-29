@@ -3,6 +3,32 @@ import { Link } from "react-router-dom";
 
 import "./style.css";
 
+// const handleInputs = async () => {
+//   const username = document.getElementById("usernameInput").value;
+//   const password = document.getElementById("passwordInput").value;
+
+//   await axios
+//     .post(
+//       "/loginInputs",
+//       {
+//         username: username,
+//         password: password,
+//       },
+//       {
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     )
+//     .then((response) => {
+//       console.log("Server response:", response);
+//       window.location.href = "/chat";
+//     }).catch((error) => {
+//       console.log("Error:", error);
+//     });
+// };
+
+
 const Login = () => {
   return (
     <div className="login">

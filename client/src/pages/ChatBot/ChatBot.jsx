@@ -1,3 +1,4 @@
+/* global webkitSpeechRecognition */
 import axios from "axios";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
@@ -9,42 +10,74 @@ import {
   PiPaperPlaneTiltBold,
   PiMicrophoneBold,
   PiStopCircleBold,
+  PiXCircleBold,
+  PiXFill,
 } from "react-icons/pi";
 
 import "./style.css";
 
-
-
 const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-  // const [userName, setUserName] = useState("syedaddan");
-  // const [avatarName, setAvatarName] = useState("");
-  // const [avatarRelation, setAvatarRelation] = useState("");
-  // const [avatarAdditional, setAvatarAdditional] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  // const [audioContext, setAudioContext] = useState(null);
   const messageContainerRef = useRef(null);
-  const audioStreamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
+  let recognition;
 
+  const clearMessages = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all messages? (This will not clear chat history)"
+      )
+    ) {
+      setMessages([]);
+    }
+  };
 
-  // const getStartupStuff = async (e) => {
-  //   setUserName("syedaddan");
-  //   axios
-  //     .get(`/getUser/?userName=${userName}`)
-  //     .then((response) => {
-  //       console.log(response.data);
-  //       setAvatarName(response.data.avatarName);
-  //       setAvatarRelation(response.data.relationship);
-  //       setAvatarAdditional(response.data.additional);
-  //       setMessages(...response.data.messages);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error fetching user data:", error);
-  //     });
-  // }
+  const clearHistory = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to clear all chat history? (This will clear the database of all messages of current user)"
+      )
+    ) {
+      setMessages([]);
+      await axios
+        .post(`/clearHistory`, {
+          userName: "syedaddan",
+        })
+        .then((response) => {
+          console.log(response);
+        })
+        .catch((error) => {
+          console.error("Error clearing chat history:", error);
+        });
+    }
+  };
 
+  const populateMessages = (dbMessages) => {
+    const newMessages = dbMessages.map((message) => {
+      return {
+        text: message.content,
+        type: message.role,
+      };
+    });
+    setMessages(newMessages);
+  };
+
+  const getStartupStuff = async (e) => {
+    const userName = "syedaddan";
+    axios
+      .post(`/getUser`, {
+        userName: userName,
+      })
+      .then((response) => {
+        if (response.data.messages.length > 0) {
+          populateMessages(response.data.messages);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user data:", error);
+      });
+  };
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -65,12 +98,10 @@ const ChatBot = () => {
 
   const getResponse = async (message) => {
     await axios
-      .post(
-        `/chatbot`, {
-          message: message,
-          userName: 'syedaddan'
-        }
-      )
+      .post(`/chatbot`, {
+        message: message,
+        userName: "syedaddan",
+      })
       .then((response) => {
         const chatbotResponse = {
           text: response.data.responseText,
@@ -99,79 +130,127 @@ const ChatBot = () => {
   };
 
   const startRecording = () => {
-    // Check if the user's browser supports audio recording
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert("Audio recording is not supported in this browser.");
+    // Check if the user's browser supports SpeechRecognition
+    if (!window.webkitSpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
       return;
     }
 
-    // Request access to the user's microphone
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((stream) => {
-        audioStreamRef.current = stream;
+    // Create a new instance of SpeechRecognition
+    recognition = new webkitSpeechRecognition();
 
-        // Create a MediaRecorder to record audio
-        const mediaRecorder = new MediaRecorder(stream);
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    
+    recognition.start();
 
-        // Handle audio data when available
-        mediaRecorder.ondataavailable = handleAudioData;
+    recognition.onresult = handleSpeechResult;
 
-        // Start recording
-        mediaRecorder.start();
+    recognition.onerror = handleSpeechError;
 
-        // Store the MediaRecorder instance
-        mediaRecorderRef.current = mediaRecorder;
-      })
-      .catch((error) => {
-        console.error("Error accessing microphone:", error);
-      });
+    recognition.onspeechend = handleSpeechEnd;
   };
 
   const stopRecording = () => {
-    // Stop recording
-    mediaRecorderRef.current.stop();
-
-    // Release the microphone
-    audioStreamRef.current.getTracks().forEach((track) => {
-      track.stop();
-    });
+    if (recognition) {
+      recognition.stop();
+    }
   };
 
-  const handleAudioData = (event) => {
-    // Handle audio data (transcription or playback)
-    const audioBlob = event.data;
+  const handleSpeechResult = (event) => {
+    const transcript = Array.from(event.results)
+      .map((result) => result[0].transcript)
+      .join("");
 
-    axios
-      .post(
-        `/stt`,
-        { audio: audioBlob },
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      )
-      .then((response) => {
-        console.log(response.data);
-        const sttText = { text: response.data.text, type: "user" };
-        addMessage(sttText);
-        getResponse(sttText.text);
-      })
-      .catch((error) => {
-        console.error("Error fetching STT response:", error);
-        const sttText = {
-          text: "Sorry, something went wrong.",
-          type: "user",
-        };
-        addMessage(sttText);
-        const botText = {
-          text: "Seems like your message wasn't send properly. Please, try again!.",
-          type: "bot",
-        };
-        addMessage(botText);
-      });
+    setInput(transcript);
   };
+
+  const handleSpeechError = (event) => {
+    console.error("Speech recognition error:", event.error);
+    alert("Speech recognition error occurred. Please try again.");
+  };
+
+  const handleSpeechEnd = (event) => {
+    console.log(event);
+    setIsRecording(false);
+    stopRecording();
+  }
+
+  // const startRecording = () => {
+  //   // Check if the user's browser supports audio recording
+  //   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  //     alert("Audio recording is not supported in this browser.");
+  //     return;
+  //   }
+
+  //   // Request access to the user's microphone
+  //   navigator.mediaDevices
+  //     .getUserMedia({ audio: true })
+  //     .then((stream) => {
+  //       audioStreamRef.current = stream;
+
+  //       // Create a MediaRecorder to record audio
+  //       const mediaRecorder = new MediaRecorder(stream);
+
+  //       // Handle audio data when available
+  //       mediaRecorder.ondataavailable = handleAudioData;
+
+  //       // Start recording
+  //       mediaRecorder.start();
+
+  //       // Store the MediaRecorder instance
+  //       mediaRecorderRef.current = mediaRecorder;
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error accessing microphone:", error);
+  //     });
+  // };
+
+  // const stopRecording = () => {
+  //   // Stop recording
+  //   mediaRecorderRef.current.stop();
+
+  //   // Release the microphone
+  //   audioStreamRef.current.getTracks().forEach((track) => {
+  //     track.stop();
+  //   });
+  // };
+
+  // const handleAudioData = (event) => {
+  //   // Handle audio data (transcription or playback)
+  //   const audioBlob = event.data;
+
+  //   axios
+  //     .post(
+  //       `/stt`,
+  //       { audio: audioBlob },
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //         },
+  //       }
+  //     )
+  //     .then((response) => {
+  //       console.log(response.data);
+  //       const sttText = { text: response.data.text, type: "user" };
+  //       addMessage(sttText);
+  //       getResponse(sttText.text);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching STT response:", error);
+  //       const sttText = {
+  //         text: "Sorry, something went wrong.",
+  //         type: "user",
+  //       };
+  //       addMessage(sttText);
+  //       const botText = {
+  //         text: "Seems like your message wasn't send properly. Please, try again!.",
+  //         type: "bot",
+  //       };
+  //       addMessage(botText);
+  //     });
+  // };
 
   useEffect(() => {
     if (messageContainerRef.current) {
@@ -180,9 +259,9 @@ const ChatBot = () => {
     }
   }, [messages]);
 
-  // useEffect(() => {
-  //   getStartupStuff();
-  // }, []);
+  useEffect(() => {
+    getStartupStuff();
+  }, []);
 
   return (
     <div className="chatbot">
@@ -217,40 +296,47 @@ const ChatBot = () => {
           </div>
         </div>
       </header>
-        <div className="chatbot-body">
-          <div className="chatbot-content">
-            <div className="avatar-section">
-              <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
-            </div>
-            <div className="transcript-section" ref={messageContainerRef}>
-              {messages.map((message, index) => (
-                <div key={index} className={`message ${message.type}`}>
-                  {message.text}
-                </div>
-              ))}
-            </div>
+      <div className="chatbot-body">
+        <div className="chatbot-content">
+          <div className="avatar-section">
+            <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
           </div>
-          <div className="chatbot-input">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSendMessage();
-              }}
-            />
-            <button className="send-button" onClick={handleSendMessage}>
-              <PiPaperPlaneTiltBold />
-            </button>
-            <button
-              className={`record-button ${isRecording ? "recording" : ""}`}
-              onClick={handleToggleRecording}
-            >
-              {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
-            </button>
+          <div className="transcript-section" ref={messageContainerRef}>
+            {messages.map((message, index) => (
+              <div key={index} className={`message ${message.type}`}>
+                {message.text}
+              </div>
+            ))}
           </div>
         </div>
+        <div className="chatbot-input">
+          <input
+            id="chatbot-input"
+            type="text"
+            placeholder="Type a message..."
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSendMessage();
+            }}
+          />
+          <button className="clear-history-button" onClick={clearHistory}>
+            <PiXFill />
+          </button>
+          <button className="clear-messages-button" onClick={clearMessages}>
+            <PiXCircleBold />
+          </button>
+          <button
+            className={`record-button ${isRecording ? "recording" : ""}`}
+            onClick={handleToggleRecording}
+          >
+            {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
+          </button>
+          <button className="send-button" onClick={handleSendMessage}>
+            <PiPaperPlaneTiltBold />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
