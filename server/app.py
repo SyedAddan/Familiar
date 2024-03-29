@@ -1,6 +1,6 @@
 import uvicorn
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -61,9 +61,29 @@ app.add_middleware(
 )
 
 
-@app.post('/signup')
-def signUp(email: str, username: str, avatarName: str, relationship: str, additional: str, password: str, confirmPassword: str):
+
+
+
+class SignUp(BaseModel):
+    email: str
+    username: str
+    avatarName: str
+    relationship: str
+    additional: str
+    password: str
+    confirmPassword: str
+
+@app.post('/signupInputs', status_code=200)
+def signUp(request_data: SignUp, response: Response):
     try:
+        email = request_data.email
+        username = request_data.username
+        avatarName = request_data.avatarName
+        relationship = request_data.relationship
+        additional = request_data.additional
+        password = request_data.password
+        confirmPassword = request_data.confirmPassword
+        
         app.state.username = username
         app.state.avatarName = avatarName
         
@@ -74,13 +94,15 @@ def signUp(email: str, username: str, avatarName: str, relationship: str, additi
         # Add the User to the database and commit the changes
         db.add(new_user)
         db.commit()
-
+        response.status_code = 200
         return {"responseText": "Success"}
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail="Something went wrong")
+        response.status_code = 500
+        return {"responseText": "Error", "error": e}
+
+
     
-@app.post('/uploadAudio')
+@app.post('/uploadAudio', status_code=200)
 async def uploadAudio(audio: UploadFile = File(...)):
     try:
         username = app.state.username
@@ -102,21 +124,41 @@ async def uploadAudio(audio: UploadFile = File(...)):
         print(e)
         raise HTTPException(status_code=500, detail="Something went wrong")
 
-@app.post('/login')
-def login(username: str, password: str):
+
+
+class Login(BaseModel):
+    username: str
+    password: str
+
+@app.post('/loginInputs', status_code=200)
+def login(request_data: Login, response: Response):
     try:
-        user = db.query(User).filter_by(username=username).first()
+        username = request_data.username
+        password = request_data.password
+        try:
+            user = db.query(User).filter_by(username=username).first()
+        except:
+            response.status_code = 401
+            return {"responseText": "Username or password is incorrect"}
         if user.password == password:
             return {"responseText": "Success"}
         else:
-            raise HTTPException(status_code=401, detail="Unauthorized access")
+            response.status_code = 401
+            return {"responseText": "Username or password is incorrect1"}
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=500, detail="Something went wrong")
+        response.status_code = 500
+        return {"responseText": "Something went wrong"}
 
-@app.post('/getUser')
-async def getUser(userName: str):
+
+
+class GetUser(BaseModel):
+    userName: str
+
+@app.post('/getUser', status_code=200)
+async def getUser(request_data: GetUser, response: Response):
     try:
+        userName = request_data.userName
         user = db.query(User).filter_by(username=userName).first()
         return {
             "username": user.username,
@@ -127,11 +169,20 @@ async def getUser(userName: str):
         }
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=500, detail="Something went wrong")
+        response.status_code = 500
+        return {"responseText": "Something went wrong", "error": e}
 
-@app.post('/chatbot')
-async def chatbot(message: str, userName: str):
+
+
+class Chatbot(BaseModel):
+    message: str
+    userName: str
+
+@app.post('/chatbot', status_code=200)
+async def chatbot(request_data: Chatbot, response: Response):
     try:
+        userName = request_data.userName
+        message = request_data.message
         userData = db.query(User).filter_by(username=userName).first()
         avatarName = userData.avatarName
         avatarRelationship = userData.relationship
@@ -150,10 +201,29 @@ async def chatbot(message: str, userName: str):
         return {'responseText': response}
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=500, detail="Something went wrong")
+        response.status_code = 500
+        return {"responseText": "Something went wrong", "error": e}
 
 
-# @app.post('/stt')
+
+class ClearHistory(BaseModel):
+    userName: str
+
+@app.post('/clearHistory', status_code=200)
+async def clearhistory(request_data: ClearHistory, response: Response):
+    try:
+        userName = request_data.userName
+        userData = db.query(User).filter_by(username=userName).first()
+        userData.messages = ""
+        db.commit()
+        
+        return {"responseText": "Success"}
+    except Exception as e:
+        print(e)
+        response.status_code = 500
+        return {"responseText": "Something went wrong", "error": e}
+
+# @app.post('/stt', status_code=200)
 # async def stt(audio: UploadFile = File(...)):
 #     try:
 #         text = generate_text_from_speech(await audio.read())
