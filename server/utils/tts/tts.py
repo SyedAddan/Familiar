@@ -1,8 +1,10 @@
+import sys
+print(__path__)
+sys.path.append(__path__[0])
 import numpy as np
 import librosa
 from IPython.display import Audio, display, clear_output
 # import IPython
-import sys
 import os
 import subprocess
 # from scipy.io.wavfile import write
@@ -10,8 +12,6 @@ from pathlib import Path
 from vocoder import inference as vocoder
 from encoder import inference as encoder
 from synthesizer.inference import Synthesizer
-print(__path__)
-sys.path.append(__path__[0])
 
 
 project_name = "Real_Time_Voice_Cloning"
