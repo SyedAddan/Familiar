@@ -5,6 +5,30 @@
     justify-content: space-between;
 }
 
+.content {
+  height: 500px;
+  left: 648px;
+  position: absolute;
+  top: 332px;
+  width: 629px;
+  display: flex;
+}
+
+.text-wrapper-3 {
+  color: #000000;
+  font-family: "Montserrat", Helvetica;
+  font-size: 70px;
+  font-weight: 1000;
+  height: 30px;
+  left: 3px;
+  letter-spacing: -0.75px;
+  line-height: 66.5px;
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  width: 206px;
+}
+
 .avatar-inputs {
     display: flex;
     flex-direction: row;
