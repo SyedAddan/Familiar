@@ -7,14 +7,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from utils.llm.llm import generate_chatbot_response
-# from utils.stt.stt import generate_text_from_speech
 
 
-def handle_text_stream(res_stream):
-    for event in res_stream:
-        if "content" in event["choices"][0].delta:
-            current_response = event["choices"][0].delta.content
-            yield "data: " + current_response + "\n\n"
+# def handle_text_stream(res_stream):
+#     for event in res_stream:
+#         if "content" in event["choices"][0].delta:
+#             current_response = event["choices"][0].delta.content
+#             yield "data: " + current_response + "\n\n"
 
 def messages_to_db_form(messages):
     str = ""
@@ -59,7 +58,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 
@@ -238,4 +236,4 @@ if __name__ == '__main__':
     Base.metadata.create_all(bind=engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

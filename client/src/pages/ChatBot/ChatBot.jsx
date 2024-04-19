@@ -21,7 +21,13 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
   const messageContainerRef = useRef(null);
-  let recognition;
+
+  let loggedIn = sessionStorage.getItem("loggedIn");
+  let recognition = new webkitSpeechRecognition();
+
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-US";
 
   const clearMessages = () => {
     if (
@@ -64,7 +70,7 @@ const ChatBot = () => {
   };
 
   const getStartupStuff = async (e) => {
-    const userName = "syedaddan";
+    const userName = sessionStorage.getItem("username");
     axios
       .post(`/getUser`, {
         userName: userName,
@@ -136,13 +142,6 @@ const ChatBot = () => {
       return;
     }
 
-    // Create a new instance of SpeechRecognition
-    recognition = new webkitSpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    
     recognition.start();
 
     recognition.onresult = handleSpeechResult;
@@ -168,14 +167,14 @@ const ChatBot = () => {
 
   const handleSpeechError = (event) => {
     console.error("Speech recognition error:", event.error);
-    alert("Speech recognition error occurred. Please try again.");
+    alert("Speech recognition error occurred. Please try again: ", event.error);
   };
 
   const handleSpeechEnd = (event) => {
     console.log(event);
     setIsRecording(false);
     stopRecording();
-  }
+  };
 
   // const startRecording = () => {
   //   // Check if the user's browser supports audio recording
@@ -276,14 +275,23 @@ const ChatBot = () => {
             <div className="familiar-logo">Familiar</div>
           </Link>
           <div className="nav-buttons">
-            <Link to="/login">
+            {loggedIn ? (
+              <Link to="/login">
+                <div className="login-selection">
+                  <div className="overlap-group">
+                    <div className="login-button" />
+                    <div className="text-wrapper">Logout</div>
+                  </div>
+                </div>
+              </Link>
+            ) : (
               <div className="login-selection">
                 <div className="overlap-group">
                   <div className="login-button" />
                   <div className="text-wrapper">Login</div>
                 </div>
               </div>
-            </Link>
+            )}
             <Link to="/pricing">
               <div className="text-wrapper-2">Pricing</div>
             </Link>
@@ -296,47 +304,55 @@ const ChatBot = () => {
           </div>
         </div>
       </header>
-      <div className="chatbot-body">
-        <div className="chatbot-content">
-          <div className="avatar-section">
-            <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
+      {loggedIn ? (
+        <div className="chatbot-body">
+          <div className="chatbot-content">
+            <div className="avatar-section">
+              <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
+            </div>
+            <div className="transcript-section" ref={messageContainerRef}>
+              {messages.map((message, index) => (
+                <div key={index} className={`message ${message.type}`}>
+                  {message.text}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="transcript-section" ref={messageContainerRef}>
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.type}`}>
-                {message.text}
-              </div>
-            ))}
+          <div className="chatbot-input">
+            <input
+              id="chatbot-input"
+              type="text"
+              placeholder="Type a message..."
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSendMessage();
+              }}
+            />
+            <button className="clear-history-button" onClick={clearHistory}>
+              <PiXFill />
+            </button>
+            <button className="clear-messages-button" onClick={clearMessages}>
+              <PiXCircleBold />
+            </button>
+            <button
+              className={`record-button ${isRecording ? "recording" : ""}`}
+              onClick={handleToggleRecording}
+            >
+              {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
+            </button>
+            <button className="send-button" onClick={handleSendMessage}>
+              <PiPaperPlaneTiltBold />
+            </button>
           </div>
         </div>
-        <div className="chatbot-input">
-          <input
-            id="chatbot-input"
-            type="text"
-            placeholder="Type a message..."
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendMessage();
-            }}
-          />
-          <button className="clear-history-button" onClick={clearHistory}>
-            <PiXFill />
-          </button>
-          <button className="clear-messages-button" onClick={clearMessages}>
-            <PiXCircleBold />
-          </button>
-          <button
-            className={`record-button ${isRecording ? "recording" : ""}`}
-            onClick={handleToggleRecording}
-          >
-            {isRecording ? <PiStopCircleBold /> : <PiMicrophoneBold />}
-          </button>
-          <button className="send-button" onClick={handleSendMessage}>
-            <PiPaperPlaneTiltBold />
-          </button>
+      ) : (
+        <div className="content">
+          <div className="text-wrapper-3">
+            Please <Link to={"/login"}>Log In!</Link>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
