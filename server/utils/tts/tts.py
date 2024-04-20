@@ -1,12 +1,13 @@
 import replicate
 
 
-def voice_cloning(audio_path):
+def voice_cloning(audio_path, text):
     source_audio = open(
         audio_path, "rb")
 
     input = {
-        "speaker": source_audio
+        "speaker": source_audio,
+        "text": text
     }
 
     output = replicate.run(
