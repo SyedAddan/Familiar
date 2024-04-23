@@ -7,7 +7,7 @@ import "./style.css";
 const handleInputs = async () => {
   const username = document.getElementById("usernameInput").value;
   const password = document.getElementById("passwordInput").value;
-
+  console.log("here")
   await axios
     .post(
       "/loginInputs",
