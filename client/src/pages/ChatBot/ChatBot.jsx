@@ -21,6 +21,8 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
   const messageContainerRef = useRef(null);
+  const [video, setVideo] = useState(null);
+  const [avatarImage, setAvatarImage] = useState(null);
 
   let loggedIn = sessionStorage.getItem("loggedIn");
   let recognition = new webkitSpeechRecognition();
@@ -78,6 +80,7 @@ const ChatBot = () => {
       .then((response) => {
         if (response.data.messages.length > 0) {
           populateMessages(response.data.messages);
+          setAvatarImage(`/avatars/${response.data.username}_${response.data.avatarName}_avatar.png`)
         }
       })
       .catch((error) => {
@@ -109,6 +112,9 @@ const ChatBot = () => {
         userName: "syedaddan",
       })
       .then((response) => {
+        const avatarResponse = response.data.reponseAvatar
+        setVideo(avatarResponse)
+        setAvatarImage(null)
         const chatbotResponse = {
           text: response.data.responseText,
           type: "bot",
@@ -308,7 +314,15 @@ const ChatBot = () => {
         <div className="chatbot-body">
           <div className="chatbot-content">
             <div className="avatar-section">
-              <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
+              {
+                video ? (
+                  <video controls>
+                    <source src={video} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img className="avatar" src={avatarImage} alt="avatar"/>
+                )
+              }
             </div>
             <div className="transcript-section" ref={messageContainerRef}>
               {messages.map((message, index) => (

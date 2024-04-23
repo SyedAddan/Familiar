@@ -2,7 +2,7 @@
   "name": "familiar",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://0.0.0.0:8000",
+  "proxy": "http://127.0.0.1:800/",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.4.2",
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
@@ -15,6 +15,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.5.1",
     "babel-plugin-macros": "^3.1.0",
+    "es-abstract": "^1.23.3",
     "mdb-react-ui-kit": "^6.3.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.9.0",

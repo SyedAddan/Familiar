@@ -23,7 +23,8 @@ def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdd
         Don't justify your answers.
         Don't give information not mentioned in the CONTEXT INFORMATION.
         You have to maintain a consistent personality and context throughout the conversation.
-        You have to maintain a conformting and understanding tone throughout the conversation.'''
+        You have to maintain a conformting and understanding tone throughout the conversation.
+        Very Important Note: Keep your response short and to the point but not too strict'''
         
         messages = [
             {"role": "system", "content": sys_query},

@@ -1,13 +1,17 @@
 import uvicorn
+import requests
+from pathlib import Path
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, HTTPException, Response
+from sqlalchemy.orm import sessionmaker
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from fastapi import FastAPI, UploadFile, File, HTTPException, Response
+from fastapi.staticfiles import StaticFiles
 
 from utils.llm.llm import generate_chatbot_response
-
+from utils.avatar.avatar import avatar_creation
+from utils.tts.tts import voice_cloning
 
 # def handle_text_stream(res_stream):
 #     for event in res_stream:
@@ -49,6 +53,8 @@ class User(Base):
 
 app = FastAPI()
 
+app.mount("/avatars", StaticFiles(directory="./avatars"), name='images')
+
 # Allowing CORS
 origins = ["*"]
 app.add_middleware(
@@ -58,7 +64,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 
@@ -164,6 +169,7 @@ async def getUser(request_data: GetUser, response: Response):
             "relationship": user.relationship,
             "additional": user.additional,
             "messages": messages_from_db_form(user.messages)
+
         }
     except Exception as e:
         print(e)
@@ -186,7 +192,7 @@ async def chatbot(request_data: Chatbot, response: Response):
         avatarRelationship = userData.relationship
         avatarAdditional = userData.additional
         messages = messages_from_db_form(userData.messages)
-        response, messages = generate_chatbot_response(
+        chat_response, messages = generate_chatbot_response(
             message,
             avatarName,
             avatarRelationship,
@@ -194,9 +200,20 @@ async def chatbot(request_data: Chatbot, response: Response):
             messages
         )
         userData.messages = messages_to_db_form(messages)
+
+        avatar_path = Path(f"./avatars/{userName}_{avatarName}_avatar.png")
+        voice_path = Path(f"./voices/{userName}_{avatarName}_voice.wav")
+
+        tts_url = voice_cloning(voice_path, chat_response)
+        tts_voice = requests.get(tts_url, allow_redirects=True)
+        with open('./response_voices/temp.mp3', 'wb') as f:
+            f.write(tts_voice.content)
+
+        avatar_response = avatar_creation(Path("./response_voices/temp.mp3"), avatar_path)
+
         db.commit()
         
-        return {'responseText': response}
+        return {'responseText': chat_response, 'reponseAvatar': avatar_response}
     except Exception as e:
         print(e)
         response.status_code = 500
@@ -232,8 +249,8 @@ async def clearhistory(request_data: ClearHistory, response: Response):
 
 
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///users.sqlite3')
+    engine = create_engine('sqlite:///users.sqlite3',)
     Base.metadata.create_all(bind=engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, port=800)
