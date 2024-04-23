@@ -16,18 +16,16 @@ import NotFound from "./pages/404/404";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" exact element={<Home></Home>} />
-        <Route path="/chat" exact element={<ChatBot></ChatBot>} />
-        <Route path="/contact" exact element={<Contact></Contact>} />
-        <Route path="/login" exact element={<Login></Login>} />
-        <Route path="/signup" exact element={<Signup></Signup>} />
-        <Route path="/pricing" exact element={<Pricing></Pricing>} />
-        <Route path="/about" exact element={<About></About>} />
-        <Route path="*" element={<NotFound></NotFound>} />
-      </Routes>
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" exact element={<Home></Home>} />
+      <Route path="/chat" exact element={<ChatBot></ChatBot>} />
+      <Route path="/contact" exact element={<Contact></Contact>} />
+      <Route path="/login" exact element={<Login></Login>} />
+      <Route path="/signup" exact element={<Signup></Signup>} />
+      <Route path="/pricing" exact element={<Pricing></Pricing>} />
+      <Route path="/about" exact element={<About></About>} />
+      <Route path="*" element={<NotFound></NotFound>} />
+    </Routes>
+  </BrowserRouter>
 );

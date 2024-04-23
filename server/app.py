@@ -1,19 +1,14 @@
 import uvicorn
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, HTTPException, Response
+from sqlalchemy.orm import sessionmaker
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Column, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from fastapi import FastAPI, UploadFile, File, HTTPException, Response
 
 from utils.llm.llm import generate_chatbot_response
 
-
-# def handle_text_stream(res_stream):
-#     for event in res_stream:
-#         if "content" in event["choices"][0].delta:
-#             current_response = event["choices"][0].delta.content
-#             yield "data: " + current_response + "\n\n"
 
 def messages_to_db_form(messages):
     str = ""
@@ -48,6 +43,7 @@ class User(Base):
     messages = Column(String(10000), nullable=True)
 
 app = FastAPI()
+app.mount("/avatars", StaticFiles(directory="avatars"), name="avatars")
 
 # Allowing CORS
 origins = ["*"]
@@ -58,7 +54,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 

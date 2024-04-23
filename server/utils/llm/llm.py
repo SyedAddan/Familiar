@@ -3,10 +3,10 @@ from dotenv import load_dotenv, find_dotenv
 from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())  # read local .env file
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 OPENAI_API_MODEL = "gpt-3.5-turbo"
-TOGETHER_API_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+TOGETHER_API_MODEL = "meta-llama/Llama-3-70b-chat-hf"
 
 client = OpenAI(
     api_key=TOGETHER_API_KEY,
