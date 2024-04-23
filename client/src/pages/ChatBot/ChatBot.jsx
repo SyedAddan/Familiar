@@ -2,6 +2,7 @@
 import axios from "axios";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
+import { TalkingHead } from "./utils/talkinghead.mjs";
 
 import "mdb-react-ui-kit/dist/css/mdb.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -15,6 +16,8 @@ import {
 } from "react-icons/pi";
 
 import "./style.css";
+
+let avatar;
 
 const ChatBot = () => {
   const [input, setInput] = useState("");
@@ -46,9 +49,10 @@ const ChatBot = () => {
       )
     ) {
       setMessages([]);
+      const userName = sessionStorage.getItem("username");
       await axios
         .post(`/clearHistory`, {
-          userName: "syedaddan",
+          userName: userName,
         })
         .then((response) => {
           console.log(response);
@@ -69,22 +73,6 @@ const ChatBot = () => {
     setMessages(newMessages);
   };
 
-  const getStartupStuff = async (e) => {
-    const userName = sessionStorage.getItem("username");
-    axios
-      .post(`/getUser`, {
-        userName: userName,
-      })
-      .then((response) => {
-        if (response.data.messages.length > 0) {
-          populateMessages(response.data.messages);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching user data:", error);
-      });
-  };
-
   const handleInputChange = (e) => {
     setInput(e.target.value);
   };
@@ -97,24 +85,21 @@ const ChatBot = () => {
     await getResponse(input);
   };
 
-  const addMessage = (message) => {
-    console.log(message);
-    setMessages((prevMessages) => [...prevMessages, message]);
-  };
-
   const getResponse = async (message) => {
+    const userName = sessionStorage.getItem("username");
     await axios
       .post(`/chatbot`, {
         message: message,
-        userName: "syedaddan",
+        userName: userName,
       })
       .then((response) => {
         const chatbotResponse = {
           text: response.data.responseText,
           type: "bot",
         };
-
         addMessage(chatbotResponse);
+        console.log(avatar);
+        avatar.speakText(response.data.responseText);
       })
       .catch((error) => {
         const botResponse = {
@@ -123,7 +108,14 @@ const ChatBot = () => {
         };
         addMessage(botResponse);
         console.error("Error fetching chatbot response:", error);
+        avatar.speakText(
+          "Hmmmmm... It seems like the language model powering me is having problems. I'm sorry about that."
+        );
       });
+  };
+
+  const addMessage = (message) => {
+    setMessages((prevMessages) => [...prevMessages, message]);
   };
 
   const handleToggleRecording = () => {
@@ -176,81 +168,6 @@ const ChatBot = () => {
     stopRecording();
   };
 
-  // const startRecording = () => {
-  //   // Check if the user's browser supports audio recording
-  //   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-  //     alert("Audio recording is not supported in this browser.");
-  //     return;
-  //   }
-
-  //   // Request access to the user's microphone
-  //   navigator.mediaDevices
-  //     .getUserMedia({ audio: true })
-  //     .then((stream) => {
-  //       audioStreamRef.current = stream;
-
-  //       // Create a MediaRecorder to record audio
-  //       const mediaRecorder = new MediaRecorder(stream);
-
-  //       // Handle audio data when available
-  //       mediaRecorder.ondataavailable = handleAudioData;
-
-  //       // Start recording
-  //       mediaRecorder.start();
-
-  //       // Store the MediaRecorder instance
-  //       mediaRecorderRef.current = mediaRecorder;
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error accessing microphone:", error);
-  //     });
-  // };
-
-  // const stopRecording = () => {
-  //   // Stop recording
-  //   mediaRecorderRef.current.stop();
-
-  //   // Release the microphone
-  //   audioStreamRef.current.getTracks().forEach((track) => {
-  //     track.stop();
-  //   });
-  // };
-
-  // const handleAudioData = (event) => {
-  //   // Handle audio data (transcription or playback)
-  //   const audioBlob = event.data;
-
-  //   axios
-  //     .post(
-  //       `/stt`,
-  //       { audio: audioBlob },
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     )
-  //     .then((response) => {
-  //       console.log(response.data);
-  //       const sttText = { text: response.data.text, type: "user" };
-  //       addMessage(sttText);
-  //       getResponse(sttText.text);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error fetching STT response:", error);
-  //       const sttText = {
-  //         text: "Sorry, something went wrong.",
-  //         type: "user",
-  //       };
-  //       addMessage(sttText);
-  //       const botText = {
-  //         text: "Seems like your message wasn't send properly. Please, try again!.",
-  //         type: "bot",
-  //       };
-  //       addMessage(botText);
-  //     });
-  // };
-
   useEffect(() => {
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop =
@@ -259,6 +176,55 @@ const ChatBot = () => {
   }, [messages]);
 
   useEffect(() => {
+    const getAvatar = async () => {
+      if (avatar) {
+        return
+      }
+
+      // Instantiate the class
+      const nodeAvatar = document.getElementById("avatar");
+      avatar = new TalkingHead(nodeAvatar, {
+        ttsEndpoint:
+          "https://texttospeech.googleapis.com/v1beta1/text:synthesize",
+        cameraView: "upper",
+      });
+
+      // Load and show the avatar
+      const userName = sessionStorage.getItem("username");
+      try {
+        await avatar.showAvatar({
+          url: `/avatars/${userName}_Ryan_avatar.glb`,
+          avatarMood: "neutral",
+          ttsLang: "en-US",
+          ttsVoice: "en-US-Destiny-D",
+          lipsyncLang: "en",
+        });
+        console.log("Avatar fully loaded!");
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getAvatar();
+  }, []);
+
+  useEffect(() => {
+    const getStartupStuff = async (e) => {
+      const userName = sessionStorage.getItem("username");
+      axios
+        .post(`/getUser`, {
+          userName: userName,
+        })
+        .then((response) => {
+          if (response.data.messages.length > 0) {
+            sessionStorage.setItem("avatarID", response.data.avatarID);
+            sessionStorage.setItem("avatarGender", response.data.avatarGender);
+            populateMessages(response.data.messages);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+        });
+    };
     getStartupStuff();
   }, []);
 
@@ -308,7 +274,7 @@ const ChatBot = () => {
         <div className="chatbot-body">
           <div className="chatbot-content">
             <div className="avatar-section">
-              <img className="avatar" src="/img/Familiar-v4.png" alt="avatar" />
+              <div id="avatar" />
             </div>
             <div className="transcript-section" ref={messageContainerRef}>
               {messages.map((message, index) => (

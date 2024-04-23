@@ -321,3 +321,9 @@ a .twitter-icon {
     top: 2px;
     width: 121px;
 }
+
+#avatar {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
