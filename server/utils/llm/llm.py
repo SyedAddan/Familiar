@@ -23,7 +23,12 @@ def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdd
         Don't justify your answers.
         Don't give information not mentioned in the CONTEXT INFORMATION.
         You have to maintain a consistent personality and context throughout the conversation.
-        You have to maintain a conformting and understanding tone throughout the conversation.'''
+        You have to maintain a conformting and understanding tone throughout the conversation.
+        Include emojis a lot but only include the faced emojis from this list 😐, 😶, 😏, 🙂, 🙃, 😊, 😇, 😀, 😃, 😄, 😁, 😆, 😝, 😋, 😛, 😝, 😜, 🤪, 😂, 🤣, 😂, 😅, 😉, 😭, 🥺, 😞, 😔, 😳, ☹️, 😚, 😘, 🥰, 😍, 🤩, 😡, 😠, 🤬, 😒, 😱, 😬, 🙄, 🤔, 👀, 😴
+        Avoid using the word baby, honey, sweetie and such
+        Avoid using ... (elipses)
+        Keep your answers short and precise
+        '''
         
         messages = [
             {"role": "system", "content": sys_query},
