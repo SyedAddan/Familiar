@@ -194,7 +194,7 @@ const ChatBot = () => {
       try {
         await avatar.showAvatar({
           url: `/avatars/${userName}_Ryan_avatar.glb`,
-          avatarMood: "neutral",
+          avatarMood: "happy",
           ttsLang: "en-US",
           ttsVoice: "en-US-Casual-K",
           lipsyncLang: "en",

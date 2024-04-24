@@ -1641,7 +1641,7 @@ class TalkingHead {
           noseSneerLeft: [0.7],
         },
       },
-      "🙂": { dt: [300, 2000], vs: { mouthSmile: [0.5] } },
+      "🙂": { dt: [300, 2000], vs: { mouthSmile: [0.4] } },
       "🙃": { link: "🙂" },
       "😊": {
         dt: [300, 1000, 1000],
@@ -4183,8 +4183,6 @@ class TalkingHead {
           });
           ssml += "</speak>";
 
-          console.log(ssml)
-
           const o = {
             method: "POST",
             headers: {
@@ -4229,8 +4227,6 @@ class TalkingHead {
             this.startSpeaking(true);
           });
           const data = await res.json();
-
-          console.log(data)
 
           if (res.status === 200 && data && data.audioContent) {
             // Audio data
