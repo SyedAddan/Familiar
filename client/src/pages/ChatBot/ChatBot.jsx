@@ -98,7 +98,6 @@ const ChatBot = () => {
           type: "bot",
         };
         addMessage(chatbotResponse);
-        console.log(avatar);
         avatar.speakText(response.data.responseText);
       })
       .catch((error) => {
@@ -186,7 +185,8 @@ const ChatBot = () => {
       avatar = new TalkingHead(nodeAvatar, {
         ttsEndpoint:
           "https://texttospeech.googleapis.com/v1beta1/text:synthesize",
-        cameraView: "upper",
+        ttsApikey: process.env.REACT_APP_GOOGLE_API_KEY,
+        cameraView: "head",
       });
 
       // Load and show the avatar
@@ -196,7 +196,7 @@ const ChatBot = () => {
           url: `/avatars/${userName}_Ryan_avatar.glb`,
           avatarMood: "neutral",
           ttsLang: "en-US",
-          ttsVoice: "en-US-Destiny-D",
+          ttsVoice: "en-US-Casual-K",
           lipsyncLang: "en",
         });
         console.log("Avatar fully loaded!");
