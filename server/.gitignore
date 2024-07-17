@@ -1,13 +1,9 @@
+# python cache
 /__pycache__
 
-
-# misc
-.env
+# virtual environment
+/familiar-server
 
 # audio cache
 output.wav
 blob.wav
-
-avatarInputs.txt
-
-test.ipynb

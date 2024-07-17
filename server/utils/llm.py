@@ -1,9 +1,12 @@
 import os
+
 from dotenv import load_dotenv, find_dotenv
+
 from openai import OpenAI
 
+
 _ = load_dotenv(find_dotenv())  # read local .env file
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 OPENAI_API_MODEL = "gpt-3.5-turbo"
 TOGETHER_API_MODEL = "meta-llama/Llama-3-70b-chat-hf"
@@ -37,17 +40,11 @@ def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdd
     else:
         messages = messages + [{"role": "user", "content": message}]
         
-    
     response = client.chat.completions.create(
         model=TOGETHER_API_MODEL,
         messages=messages
     ).choices[0].message.content
     
     messages = messages + [{"role": "bot", "content": response}]
-    
-    print(f"Previous History: {messages}")
-    print()
-    print(f"Response: {response}")
-    print()
     
     return response, messages
