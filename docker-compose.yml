@@ -15,7 +15,7 @@ services:
     volumes:
       - ./client:/app
     depends_on:
-      - familiar-server
+      - server
     environment:
       - REACT_APP_API_URL=http://server:5000  # Set the Flask API URL
 
