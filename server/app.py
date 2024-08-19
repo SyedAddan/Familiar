@@ -26,7 +26,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.post('/signupInputs', status_code=200)
 def signUp(request_data: SignUp, response: Response):
     try:
@@ -34,16 +33,16 @@ def signUp(request_data: SignUp, response: Response):
         username = request_data.username
         avatarName = request_data.avatarName
         relationship = request_data.relationship
+        gender = request_data.gender
         additional = request_data.additional
         password = request_data.password
-        confirmPassword = request_data.confirmPassword
         
         app.state.username = username
         app.state.avatarName = avatarName
         
         # Create a new User instance
         new_user = User(email=email, username=username, avatarName=avatarName,
-                        relationship=relationship, additional=additional, password=password, audio_path="", messages="")
+                        relationship=relationship, gender=gender, additional=additional, password=password, audio_path="", messages="")
 
         # Add the User to the database and commit the changes
         db.add(new_user)
@@ -53,7 +52,7 @@ def signUp(request_data: SignUp, response: Response):
     except Exception as e:
         response.status_code = 500
         return {"responseText": "Error", "error": e}
-    
+
 @app.post('/uploadAudio', status_code=200)
 async def uploadAudio(audio: UploadFile = File(...)):
     try:
@@ -105,6 +104,7 @@ async def getUser(request_data: GetUser, response: Response):
             "username": user.username,
             "avatarName": user.avatarName,
             "relationship": user.relationship,
+            "avatarGender": user.gender,
             "additional": user.additional,
             "messages": messages_from_db_form(user.messages)
         }
@@ -138,7 +138,6 @@ async def chatbot(request_data: Chatbot, response: Response):
         print(e)
         response.status_code = 500
         return {"responseText": "Something went wrong", "error": e}
-    
 
 @app.post('/clearHistory', status_code=200)
 async def clearhistory(request_data: ClearHistory, response: Response):
@@ -160,4 +159,4 @@ if __name__ == '__main__':
     Base.metadata.create_all(bind=engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, port=5000)

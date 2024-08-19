@@ -12,6 +12,7 @@ class User(Base):
     username = Column(String(80), unique=True, nullable=False, primary_key=True)
     avatarName = Column(String(80), unique=True, nullable=False)
     relationship = Column(String(1024), unique=False, nullable=False)
+    gender = Column(String(8), unique=False, nullable=False)
     additional = Column(String(1024), unique=False, nullable=True)
     password = Column(String(120), nullable=False)
     audio_path = Column(String(255), nullable=False)
@@ -22,6 +23,7 @@ class SignUp(BaseModel):
     username: str
     avatarName: str
     relationship: str
+    gender: str
     additional: str
     password: str
     confirmPassword: str

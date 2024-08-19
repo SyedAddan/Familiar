@@ -25,9 +25,11 @@ const ChatBot = () => {
   const [isRecording, setIsRecording] = useState(false);
   const messageContainerRef = useRef(null);
 
-  let loggedIn = sessionStorage.getItem("loggedIn");
-  let recognition = new webkitSpeechRecognition();
-
+  const recognition = new webkitSpeechRecognition();
+  
+  const userName = sessionStorage.getItem("username") || "";
+  const avatarName = sessionStorage.getItem("avatarName") || "";
+  
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.lang = "en-US";
@@ -49,9 +51,8 @@ const ChatBot = () => {
       )
     ) {
       setMessages([]);
-      const userName = sessionStorage.getItem("username");
       await axios
-        .post(`/clearHistory`, {
+        .post(`${process.env.SERVER_URL}/clearHistory`, {
           userName: userName,
         })
         .then((response) => {
@@ -86,9 +87,8 @@ const ChatBot = () => {
   };
 
   const getResponse = async (message) => {
-    const userName = sessionStorage.getItem("username");
     await axios
-      .post(`/chatbot`, {
+      .post(`${process.env.SERVER_URL}/chatbot`, {
         message: message,
         userName: userName,
       })
@@ -181,19 +181,18 @@ const ChatBot = () => {
       }
 
       // Instantiate the class
-      const nodeAvatar = document.getElementById("avatar");
-      avatar = new TalkingHead(nodeAvatar, {
+      const avatarNode = document.getElementById("avatar");
+      avatar = new TalkingHead(avatarNode, {
         ttsEndpoint:
-          "https://texttospeech.googleapis.com/v1beta1/text:synthesize",
+          `${process.env.GOOGLE_TTS_URL}`,
         ttsApikey: process.env.REACT_APP_GOOGLE_API_KEY,
         cameraView: "head",
       });
 
       // Load and show the avatar
-      const userName = sessionStorage.getItem("username");
       try {
         await avatar.showAvatar({
-          url: `/avatars/${userName}_Ryan_avatar.glb`,
+          url: `${process.env.SERVER_URL}/avatars/${userName}_${avatarName}.glb`,
           avatarMood: "happy",
           ttsLang: "en-US",
           ttsVoice: "en-US-Casual-K",
@@ -205,18 +204,18 @@ const ChatBot = () => {
       }
     };
     getAvatar();
-  }, []);
+  }, [avatarName, userName]);
 
   useEffect(() => {
     const getStartupStuff = async (e) => {
       const userName = sessionStorage.getItem("username");
       axios
-        .post(`/getUser`, {
+        .post(`${process.env.SERVER_URL}/getUser`, {
           userName: userName,
         })
         .then((response) => {
           if (response.data.messages.length > 0) {
-            sessionStorage.setItem("avatarID", response.data.avatarID);
+            sessionStorage.setItem("avatarName", response.data.avatarName);
             sessionStorage.setItem("avatarGender", response.data.avatarGender);
             populateMessages(response.data.messages);
           }
@@ -241,7 +240,7 @@ const ChatBot = () => {
             <div className="familiar-logo">Familiar</div>
           </Link>
           <div className="nav-buttons">
-            {loggedIn ? (
+            {userName ? (
               <Link to="/login">
                 <div className="login-selection">
                   <div className="overlap-group">
@@ -270,7 +269,7 @@ const ChatBot = () => {
           </div>
         </div>
       </header>
-      {loggedIn ? (
+      {userName ? (
         <div className="chatbot-body">
           <div className="chatbot-content">
             <div className="avatar-section">
