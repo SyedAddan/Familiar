@@ -10,7 +10,7 @@ const handleInputs = async () => {
 
   await axios
     .post(
-      "/loginInputs",
+      `${process.env.SERVER_URL}/loginInputs`,
       {
         username: username,
         password: password,
@@ -24,7 +24,6 @@ const handleInputs = async () => {
     .then((response) => {
       console.log("Server response:", response);
       sessionStorage.setItem("username", username);
-      sessionStorage.setItem("loggedIn", true);
       window.location.href = "/chat";
     }).catch((error) => {
       console.log("Error:", error);

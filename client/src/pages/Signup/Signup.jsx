@@ -19,7 +19,7 @@ const Signup = () => {
 
     await axios
       .post(
-        "/signupInputs",
+        `${process.env.SERVER_URL}/signupInputs`,
         {
           email: email,
           username: username,
@@ -48,7 +48,7 @@ const Signup = () => {
   const uploadAudio = async () => {
     await axios
       .post(
-        "/uploadAudio",
+        `${process.env.SERVER_URL}/uploadAudio`,
         {
           audio: document.getElementById("voiceInput").files[0],
         },
