@@ -1,10 +1,7 @@
-Flask
-Flask_Cors
-Flask_SQLAlchemy
-ipython==8.15.0
-python-dotenv==1.0.0
-Werkzeug==2.2.3
 fastapi
 uvicorn
 openai
 python-multipart
+python-dotenv==1.2.2
+SQLAlchemy>=2.0,<3.0
+itsdangerous==2.2.0

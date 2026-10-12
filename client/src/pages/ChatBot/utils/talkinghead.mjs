@@ -4185,8 +4185,11 @@ class TalkingHead {
 
           const o = {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
+              "X-CSRF-Token":
+                document.querySelector('meta[name="csrf-token"]')?.content || "",
             },
             body: JSON.stringify({
               input: {

@@ -1,8 +1,8 @@
 /* global webkitSpeechRecognition */
-import axios from "axios";
 import { Link } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import { TalkingHead } from "./utils/talkinghead.mjs";
+import api, { apiBaseUrl, ensureCsrfToken } from "../../api";
 
 import "mdb-react-ui-kit/dist/css/mdb.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -23,12 +23,11 @@ const ChatBot = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [avatarName, setAvatarName] = useState("");
   const messageContainerRef = useRef(null);
 
   const recognition = new webkitSpeechRecognition();
-  
-  const userName = sessionStorage.getItem("username") || "";
-  const avatarName = sessionStorage.getItem("avatarName") || "";
   
   recognition.continuous = true;
   recognition.interimResults = true;
@@ -47,20 +46,15 @@ const ChatBot = () => {
   const clearHistory = async () => {
     if (
       window.confirm(
-        "Are you sure you want to clear all chat history? (This will clear the database of all messages of current user)"
+        "Are you sure you want to clear all chat history?"
       )
     ) {
-      setMessages([]);
-      await axios
-        .post(`${process.env.SERVER_URL}/clearHistory`, {
-          userName: userName,
-        })
-        .then((response) => {
-          console.log(response);
-        })
-        .catch((error) => {
-          console.error("Error clearing chat history:", error);
-        });
+      try {
+        await api.post("/clearHistory");
+        setMessages([]);
+      } catch (error) {
+        console.error("Error clearing chat history:", error);
+      }
     }
   };
 
@@ -68,7 +62,7 @@ const ChatBot = () => {
     const newMessages = dbMessages.map((message) => {
       return {
         text: message.content,
-        type: message.role,
+        type: message.role === "assistant" ? "bot" : message.role,
       };
     });
     setMessages(newMessages);
@@ -87,11 +81,8 @@ const ChatBot = () => {
   };
 
   const getResponse = async (message) => {
-    await axios
-      .post(`${process.env.SERVER_URL}/chatbot`, {
-        message: message,
-        userName: userName,
-      })
+    await api
+      .post("/chatbot", { message })
       .then((response) => {
         const chatbotResponse = {
           text: response.data.responseText,
@@ -183,16 +174,14 @@ const ChatBot = () => {
       // Instantiate the class
       const avatarNode = document.getElementById("avatar");
       avatar = new TalkingHead(avatarNode, {
-        ttsEndpoint:
-          `${process.env.GOOGLE_TTS_URL}`,
-        ttsApikey: process.env.REACT_APP_GOOGLE_API_KEY,
+        ttsEndpoint: `${apiBaseUrl}/tts`,
         cameraView: "head",
       });
 
       // Load and show the avatar
       try {
         await avatar.showAvatar({
-          url: `${process.env.SERVER_URL}/avatars/${userName}_${avatarName}.glb`,
+          url: `${apiBaseUrl}/avatars/${encodeURIComponent(userName)}_${encodeURIComponent(avatarName)}.glb`,
           avatarMood: "happy",
           ttsLang: "en-US",
           ttsVoice: "en-US-Casual-K",
@@ -203,29 +192,40 @@ const ChatBot = () => {
         console.log(error);
       }
     };
-    getAvatar();
+    if (userName && avatarName) {
+      getAvatar();
+    }
   }, [avatarName, userName]);
 
   useEffect(() => {
-    const getStartupStuff = async (e) => {
-      const userName = sessionStorage.getItem("username");
-      axios
-        .post(`${process.env.SERVER_URL}/getUser`, {
-          userName: userName,
-        })
-        .then((response) => {
-          if (response.data.messages.length > 0) {
-            sessionStorage.setItem("avatarName", response.data.avatarName);
-            sessionStorage.setItem("avatarGender", response.data.avatarGender);
-            populateMessages(response.data.messages);
-          }
-        })
-        .catch((error) => {
+    const getStartupStuff = async () => {
+      try {
+        await ensureCsrfToken();
+        const response = await api.get("/getUser");
+        setUserName(response.data.username);
+        setAvatarName(response.data.avatarName);
+        populateMessages(response.data.messages);
+      } catch (error) {
+        if (error.response?.status !== 401) {
           console.error("Error fetching user data:", error);
-        });
+        }
+        setUserName("");
+        setAvatarName("");
+      }
     };
     getStartupStuff();
   }, []);
+
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    try {
+      await api.post("/logout");
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error logging out:", error);
+      window.alert("Unable to log out. Please check your connection and try again.");
+    }
+  };
 
   return (
     <div className="chatbot">
@@ -241,7 +241,7 @@ const ChatBot = () => {
           </Link>
           <div className="nav-buttons">
             {userName ? (
-              <Link to="/login">
+              <Link to="/login" onClick={handleLogout}>
                 <div className="login-selection">
                   <div className="overlap-group">
                     <div className="login-button" />

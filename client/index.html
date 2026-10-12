@@ -2,8 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta viewport="width=device-width, initial-scale=1" />
-    <link rel="icon" href="./img/Familiar-v4.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="" />
+    <link rel="icon" href="/img/Familiar-v4.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,33 +31,31 @@
         margin: 0px;
         height: 100%;
       }
-      /* a blue color as a generic focus style */
       button:focus-visible {
-        outline: -webkit-focus-ring-color auto 5px !important;
         outline: 2px solid #4a90e2 !important;
       }
       a {
         text-decoration: none;
       }
     </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       @import url("https://fonts.googleapis.com/css?family=Lato:500,700,900|Source+Sans+Pro:700|Montserrat:900");
     </style>
     <script type="importmap">
-    { "imports":
       {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js/+esm",
-        "three/examples/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/",
-        "dompurify": "https://cdn.jsdelivr.net/npm/dompurify@3.0.6/+esm",
-        "marked": "https://cdn.jsdelivr.net/npm/marked@11.2.0/+esm"
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js/+esm",
+          "three/examples/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/",
+          "dompurify": "https://cdn.jsdelivr.net/npm/dompurify@3.0.6/+esm",
+          "marked": "https://cdn.jsdelivr.net/npm/marked@11.2.0/+esm"
+        }
       }
-    }
     </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script type="module" src="/src/index.jsx"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api, { ensureCsrfToken } from "../../api";
 
 import "./style.css";
 
@@ -8,26 +8,13 @@ const handleInputs = async () => {
   const username = document.getElementById("usernameInput").value;
   const password = document.getElementById("passwordInput").value;
 
-  await axios
-    .post(
-      `${process.env.SERVER_URL}/loginInputs`,
-      {
-        username: username,
-        password: password,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    )
-    .then((response) => {
-      console.log("Server response:", response);
-      sessionStorage.setItem("username", username);
-      window.location.href = "/chat";
-    }).catch((error) => {
-      console.log("Error:", error);
-    });
+  try {
+    await ensureCsrfToken();
+    await api.post("/loginInputs", { username, password });
+    window.location.href = "/chat";
+  } catch (error) {
+    console.error("Error logging in:", error);
+  }
 };
 
 

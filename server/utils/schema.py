@@ -14,7 +14,7 @@ class User(Base):
     relationship = Column(String(1024), unique=False, nullable=False)
     gender = Column(String(8), unique=False, nullable=False)
     additional = Column(String(1024), unique=False, nullable=True)
-    password = Column(String(120), nullable=False)
+    password = Column(String(255), nullable=False)
     audio_path = Column(String(255), nullable=False)
     messages = Column(String(10000), nullable=True)
     
@@ -23,8 +23,8 @@ class SignUp(BaseModel):
     username: str
     avatarName: str
     relationship: str
-    gender: str
-    additional: str
+    gender: str = "neutral"
+    additional: str = ""
     password: str
     confirmPassword: str
     
@@ -32,12 +32,5 @@ class Login(BaseModel):
     username: str
     password: str 
 
-class GetUser(BaseModel):
-    userName: str
-    
 class Chatbot(BaseModel):
     message: str
-    userName: str
-    
-class ClearHistory(BaseModel):
-    userName: str

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api, { ensureCsrfToken } from "../../api";
 
 import "./style.css";
 
@@ -17,53 +17,25 @@ const Signup = () => {
       "confirmPasswordInput"
     ).value;
 
-    await axios
-      .post(
-        `${process.env.SERVER_URL}/signupInputs`,
-        {
-          email: email,
-          username: username,
-          avatarName: avatarName,
-          relationship: relationship,
-          additional: additional,
-          password: password,
-          confirmPassword: confirmPassword,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Server response:", response);
-        uploadAudio();
-        window.location.href = "/chat";
-      })
-      .catch((error) => {
-        console.error("Error sending to server:", error);
+    try {
+      await ensureCsrfToken();
+      await api.post("/signupInputs", {
+        email,
+        username,
+        avatarName,
+        relationship,
+        additional,
+        password,
+        confirmPassword,
       });
-  };
 
-  const uploadAudio = async () => {
-    await axios
-      .post(
-        `${process.env.SERVER_URL}/uploadAudio`,
-        {
-          audio: document.getElementById("voiceInput").files[0],
-        },
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      )
-      .then((response) => {
-        console.log("Server response:", response);
-      })
-      .catch((error) => {
-        console.error("Error sending to server:", error);
-      });
+      const formData = new FormData();
+      formData.append("audio", document.getElementById("voiceInput").files[0]);
+      await api.post("/uploadAudio", formData);
+      window.location.href = "/chat";
+    } catch (error) {
+      console.error("Error creating account:", error);
+    }
   };
 
   return (

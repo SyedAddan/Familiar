@@ -45,6 +45,6 @@ def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdd
         messages=messages
     ).choices[0].message.content
     
-    messages = messages + [{"role": "bot", "content": response}]
+    messages = messages + [{"role": "assistant", "content": response}]
     
     return response, messages
