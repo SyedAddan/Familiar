@@ -1,229 +1,72 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api, { ensureCsrfToken } from "../../api";
-
-import "./style.css";
-
-const handleInputs = async () => {
-  const username = document.getElementById("usernameInput").value;
-  const password = document.getElementById("passwordInput").value;
-
-  try {
-    await ensureCsrfToken();
-    await api.post("/loginInputs", { username, password });
-    window.location.href = "/chat";
-  } catch (error) {
-    console.error("Error logging in:", error);
-  }
-};
-
+import { SiteFrame } from "../../components/SiteLayout";
 
 const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      await ensureCsrfToken();
+      await api.post("/loginInputs", { username, password });
+      navigate("/chat");
+    } catch (requestError) {
+      setError(
+        requestError.response?.status === 401
+          ? "That username and password don’t match. Try again."
+          : requestError.response?.data?.detail ||
+            "We couldn’t sign you in. Check your connection and try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div className="sign-up">
-      <div className="div">
-        <header className="header">
-          <div className="overlap-2">
-            <img
-              className="upper-divider"
-              alt="Upper divider"
-              src="/img/signup/upper-divider.svg"
-            />
-            <Link to="/">
-              <div className="familiar-logo">Familiar</div>
-            </Link>
-            <div className="nav-buttons">
-              <Link to="/login">
-                <div className="login-selection">
-                  <div className="overlap-group-2">
-                    <div className="login-button" />
-                    <div className="text-wrapper-4">Login</div>
-                  </div>
-                </div>
-              </Link>
-              <Link to="/pricing">
-                <div className="text-wrapper-5">Pricing</div>
-              </Link>
-              <Link to="/contact">
-                <div className="text-wrapper-6">Contact</div>
-              </Link>
-              <Link to="about">
-                <div className="text-wrapper-7">About</div>
-              </Link>
-            </div>
+    <SiteFrame active="/login" className="auth-page">
+      <main className="auth-layout auth-layout-single">
+        <section className="auth-card">
+          <div className="auth-card-heading">
+            <h1>Log in</h1>
           </div>
-        </header>
-        <div className="content">
-          <div className="text-wrapper-3">Log In</div>
-          <form
-            id="sign-up-form"
-            className="form"
-            name="sign-up-form"
-            method="post"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleInputs();
-            }}
-          >
-            <div className="email">
-              <input
-                id="usernameInput"
-                className="text-field-wrapper"
-                placeholder="UserName*"
-                type="text"
-                required
-              />
-            </div>
-            <div className="username">
-              <input
-                id="passwordInput"
-                className="text-field-wrapper"
-                placeholder="Password*"
-                type="password"
-                required
-              />
-            </div>
-            <div className="overlap-group-wrapper">
-              <button
-                className="overlap-group"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleInputs();
-                }}
-              >
-                <div className="sign-up-text">Log In</div>
-              </button>
-            </div>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label className="field-label" htmlFor="usernameInput">Username</label>
+            <input
+              autoComplete="username"
+              id="usernameInput"
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="Your username"
+              required
+              value={username}
+            />
+            <label className="field-label" htmlFor="passwordInput">Password</label>
+            <input
+              autoComplete="current-password"
+              id="passwordInput"
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Your password"
+              required
+              type="password"
+              value={password}
+            />
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <button className="button button-primary auth-submit" disabled={submitting} type="submit">
+              {submitting ? "Signing you in…" : "Log in"}
+              <span aria-hidden="true">→</span>
+            </button>
           </form>
-          <Link to="/signup">
-            <p className="text-wrapper">Do not have an account? Sign Up</p>
-          </Link>
-        </div>
-        <footer className="footer">
-          <div className="copyright-text">© Familiar 2023</div>
-          <a href="/signup">
-            <img
-              className="facebook-icon"
-              alt="Facebook icon"
-              src="/img/signup/facebook-icon.png"
-            />
-          </a>
-          <a href="/signup">
-            <img
-              className="instagram-icon"
-              alt="Instagram icon"
-              src="/img/signup/instagram-icon.svg"
-            />
-          </a>
-          <a href="/signup">
-            <img
-              className="twitter-icon"
-              alt="Twitter icon"
-              src="/img/signup/twitter-icon.png"
-            />
-          </a>
-          <img
-            className="footer-divivder"
-            alt="Footer divivder"
-            src="/img/signup/upper-divider.svg"
-          />
-        </footer>
-      </div>
-    </div>
+        </section>
+      </main>
+    </SiteFrame>
   );
-
-
-
-  // return (
-  //   <div className="login">
-  //     <div className="div">
-  //       <footer className="footer">
-  //         <div className="copyright-text">© Familiar 2023</div>
-  //         <a href="/login">
-  //           <img
-  //             className="facebook-icon"
-  //             alt="Facebook icon"
-  //             src="/img/login/facebook-icon.png"
-  //           />
-  //         </a>
-  //         <a href="/login">
-  //           <img
-  //             className="instagram-icon"
-  //             alt="Instagram icon"
-  //             src="/img/login/instagram-icon.svg"
-  //           />
-  //         </a>
-  //         <a href="/login">
-  //           <img
-  //             className="twitter-icon"
-  //             alt="Twitter icon"
-  //             src="/img/login/twitter-icon.png"
-  //           />
-  //         </a>
-  //         <img
-  //           className="footer-divivder"
-  //           alt="Footer divivder"
-  //           src="/img/login/upper-divider.svg"
-  //         />
-  //       </footer>
-  //       <div className="content">
-  //         <Link to="/signup">
-  //           <div className="text-wrapper">New here? Sign Up</div>
-  //         </Link>
-  //         <Link to="/404">
-  //           <div className="text-wrapper-2">Forgot Password?</div>
-  //         </Link>
-  //         <div className="sign-in">
-  //           <div className="overlap-group">
-  //             <div className="sign-in-text">Sign In</div>
-  //           </div>
-  //         </div>
-  //         <div className="password">
-  //           <div className="overlap">
-  //             <div className="text-wrapper-3">Password</div>
-  //           </div>
-  //         </div>
-  //         <div className="email">
-  //           <div className="overlap">
-  //             <div className="text-wrapper-4">Email</div>
-  //           </div>
-  //         </div>
-  //         <div className="text-wrapper-5">Sign In</div>
-  //       </div>
-  //       <header className="header">
-  //         <div className="overlap-2">
-  //           <img
-  //             className="upper-divider"
-  //             alt="Upper divider"
-  //             src="/img/login/upper-divider.svg"
-  //           />
-  //           <Link to="/">
-  //             <div className="familiar-logo">Familiar</div>
-  //           </Link>
-  //           <div className="nav-buttons">
-  //             <Link to="/login">
-  //               <div className="login-selection">
-  //                 <div className="overlap-group-2">
-  //                   <div className="login-button" />
-  //                   <div className="text-wrapper-6">Login</div>
-  //                 </div>
-  //               </div>
-  //             </Link>
-  //             <Link to="/pricing">
-  //               <div className="text-wrapper-7">Pricing</div>
-  //             </Link>
-  //             <Link to="/contact">
-  //               <div className="text-wrapper-8">Contact</div>
-  //             </Link>
-  //             <Link to="/about">
-  //               <div className="text-wrapper-9">About</div>
-  //             </Link>
-  //           </div>
-  //         </div>
-  //       </header>
-  //     </div>
-  //   </div>
-  // );
 };
 
 export default Login;

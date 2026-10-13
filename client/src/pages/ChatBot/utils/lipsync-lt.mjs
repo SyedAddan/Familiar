@@ -22,7 +22,7 @@ class LipsyncLt {
     };
 
     // Lithuanian letters to durations in relative unit (1=average)
-    // TODO: Calculate based on Google TTS test run statistics
+    // TODO: Calibrate from Lithuanian speech synthesis samples.
     this.durations = {
       'a': 0.95, 'ą': 1.5, 'e': 0.90, 'ę': 1.5, 'ė': 1.5, 'i': 0.92, 'į': 1.5,
       'o': 0.96, 'u': 0.95, 'ū': 1.5, 'ų': 1.5, 'y': 1.5,  'b': 1.08,

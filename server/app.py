@@ -1,47 +1,64 @@
 import asyncio
+from html.parser import HTMLParser
 import json
 import logging
 import os
 import secrets
+import sqlite3
 import uuid
 from pathlib import Path
 from typing import Generator
 from urllib.error import HTTPError, URLError
+from urllib.parse import quote
 from urllib.request import Request as URLRequest, urlopen
 
 import uvicorn
-from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, sessionmaker
 from starlette.middleware.sessions import SessionMiddleware
 
 from utils.llm import generate_chatbot_response
 from utils.message_handler import messages_from_db_form, messages_to_db_form
 from utils.security import hash_password, is_password_hash, verify_password
-from utils.schema import Base, Chatbot, Login, SignUp, User
+from utils.schema import Chatbot, Login, SignUp
 
 
 logger = logging.getLogger(__name__)
 SERVER_ROOT = Path(__file__).resolve().parent
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
-    ENGINE_OPTIONS = (
-        {"connect_args": {"check_same_thread": False}}
-        if DATABASE_URL.startswith("sqlite")
-        else {}
-    )
-    engine = create_engine(DATABASE_URL, **ENGINE_OPTIONS)
-else:
-    engine = create_engine(
-        URL.create("sqlite", database=str(SERVER_ROOT / "users.sqlite3")),
-        connect_args={"check_same_thread": False},
-    )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base.metadata.create_all(bind=engine)
+DB_PATH = SERVER_ROOT / "users.sqlite3"
+
+
+def connect_db() -> sqlite3.Connection:
+    connection = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def initialize_database() -> None:
+    connection = connect_db()
+    try:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user (
+                email VARCHAR(120) NOT NULL UNIQUE,
+                username VARCHAR(80) NOT NULL PRIMARY KEY,
+                avatarName VARCHAR(80) NOT NULL UNIQUE,
+                relationship VARCHAR(1024) NOT NULL,
+                gender VARCHAR(8) NOT NULL,
+                additional VARCHAR(1024),
+                password VARCHAR(255) NOT NULL,
+                audio_path VARCHAR(255) NOT NULL,
+                messages VARCHAR(10000)
+            )
+            """
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+
+initialize_database()
 
 SESSION_SECRET = os.getenv("SESSION_SECRET")
 if not SESSION_SECRET or len(SESSION_SECRET) < 32:
@@ -88,22 +105,24 @@ app.add_middleware(
     https_only=SESSION_COOKIE_SECURE,
 )
 
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
+def get_db() -> Generator[sqlite3.Connection, None, None]:
+    connection = connect_db()
     try:
-        yield db
+        yield connection
     finally:
-        db.close()
+        connection.close()
 
 
 def get_current_user(
-    request: Request, db: Session = Depends(get_db)
-) -> User:
+    request: Request, db: sqlite3.Connection = Depends(get_db)
+) -> sqlite3.Row:
     username = request.session.get("username")
     if not isinstance(username, str):
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    user = db.query(User).filter_by(username=username).first()
+    user = db.execute(
+        "SELECT * FROM user WHERE username = ?", (username,)
+    ).fetchone()
     if user is None:
         request.session.clear()
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -133,25 +152,36 @@ def get_csrf_token(request: Request):
 
 
 @app.post("/signupInputs", dependencies=[Depends(require_csrf_token)])
-def sign_up(request_data: SignUp, request: Request, db: Session = Depends(get_db)):
+def sign_up(
+    request_data: SignUp,
+    request: Request,
+    db: sqlite3.Connection = Depends(get_db),
+):
     if request_data.password != request_data.confirmPassword:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
-    user = User(
-        email=request_data.email,
-        username=request_data.username,
-        avatarName=request_data.avatarName,
-        relationship=request_data.relationship,
-        gender=request_data.gender,
-        additional=request_data.additional,
-        password=hash_password(request_data.password),
-        audio_path="",
-        messages="",
-    )
-    db.add(user)
     try:
+        db.execute(
+            """
+            INSERT INTO user (
+                email, username, avatarName, relationship, gender, additional,
+                password, audio_path, messages
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                request_data.email,
+                request_data.username,
+                request_data.avatarName,
+                request_data.relationship,
+                request_data.gender,
+                request_data.additional,
+                hash_password(request_data.password),
+                "",
+                "",
+            ),
+        )
         db.commit()
-    except IntegrityError as exc:
+    except sqlite3.IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=409, detail="Email or username already exists") from exc
     except Exception:
@@ -160,7 +190,7 @@ def sign_up(request_data: SignUp, request: Request, db: Session = Depends(get_db
         raise HTTPException(status_code=500, detail="Unable to create account")
 
     request.session.clear()
-    request.session["username"] = user.username
+    request.session["username"] = request_data.username
     csrf_token = secrets.token_urlsafe(32)
     request.session["csrf_token"] = csrf_token
     return {"responseText": "Success", "csrfToken": csrf_token}
@@ -169,11 +199,12 @@ def sign_up(request_data: SignUp, request: Request, db: Session = Depends(get_db
 @app.post("/uploadAudio", dependencies=[Depends(require_csrf_token)])
 async def upload_audio(
     audio: UploadFile = File(...),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
 ):
     content = await audio.read(10 * 1024 * 1024 + 1)
     if len(content) > 10 * 1024 * 1024:
+        await audio.close()
         raise HTTPException(status_code=413, detail="Audio upload exceeds 10 MB")
 
     voices_dir = SERVER_ROOT / "voices"
@@ -181,7 +212,10 @@ async def upload_audio(
     voice_path = voices_dir / f"{uuid.uuid4().hex}.wav"
     try:
         voice_path.write_bytes(content)
-        user.audio_path = str(voice_path.relative_to(SERVER_ROOT))
+        db.execute(
+            "UPDATE user SET audio_path = ? WHERE username = ?",
+            (str(voice_path.relative_to(SERVER_ROOT)), user["username"]),
+        )
         db.commit()
     except Exception:
         db.rollback()
@@ -195,17 +229,26 @@ async def upload_audio(
 
 
 @app.post("/loginInputs", dependencies=[Depends(require_csrf_token)])
-def login(request_data: Login, request: Request, db: Session = Depends(get_db)):
-    user = db.query(User).filter_by(username=request_data.username).first()
-    if user is None or not verify_password(request_data.password, user.password):
+def login(
+    request_data: Login,
+    request: Request,
+    db: sqlite3.Connection = Depends(get_db),
+):
+    user = db.execute(
+        "SELECT * FROM user WHERE username = ?", (request_data.username,)
+    ).fetchone()
+    if user is None or not verify_password(request_data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Username or password is incorrect")
 
-    if not is_password_hash(user.password):
-        user.password = hash_password(request_data.password)
+    if not is_password_hash(user["password"]):
+        db.execute(
+            "UPDATE user SET password = ? WHERE username = ?",
+            (hash_password(request_data.password), user["username"]),
+        )
         db.commit()
 
     request.session.clear()
-    request.session["username"] = user.username
+    request.session["username"] = user["username"]
     csrf_token = secrets.token_urlsafe(32)
     request.session["csrf_token"] = csrf_token
     return {"responseText": "Success", "csrfToken": csrf_token}
@@ -218,33 +261,39 @@ def logout(request: Request):
 
 
 @app.get("/getUser")
-def get_user(user: User = Depends(get_current_user)):
+def get_user(user: sqlite3.Row = Depends(get_current_user)):
     return {
-        "username": user.username,
-        "avatarName": user.avatarName,
-        "relationship": user.relationship,
-        "avatarGender": user.gender,
-        "additional": user.additional,
-        "messages": messages_from_db_form(user.messages),
+        "username": user["username"],
+        "avatarName": user["avatarName"],
+        "relationship": user["relationship"],
+        "avatarGender": user["gender"],
+        "additional": user["additional"],
+        "messages": messages_from_db_form(user["messages"]),
+        "speechEnabled": bool(
+            os.getenv("ELEVENLABS_API_KEY") and os.getenv("ELEVENLABS_VOICE_ID")
+        ),
     }
 
 
 @app.post("/chatbot", dependencies=[Depends(require_csrf_token)])
 def chatbot(
     request_data: Chatbot,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
 ):
-    messages = messages_from_db_form(user.messages)
+    messages = messages_from_db_form(user["messages"])
     try:
         response_text, messages = generate_chatbot_response(
             request_data.message,
-            user.avatarName,
-            user.relationship,
-            user.additional,
+            user["avatarName"],
+            user["relationship"],
+            user["additional"],
             messages,
         )
-        user.messages = messages_to_db_form(messages)
+        db.execute(
+            "UPDATE user SET messages = ? WHERE username = ?",
+            (messages_to_db_form(messages), user["username"]),
+        )
         db.commit()
     except Exception:
         db.rollback()
@@ -256,11 +305,50 @@ def chatbot(
 
 @app.post("/clearHistory", dependencies=[Depends(require_csrf_token)])
 def clear_history(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
 ):
-    user.messages = ""
+    db.execute("UPDATE user SET messages = '' WHERE username = ?", (user["username"],))
     db.commit()
     return {"responseText": "Success"}
+
+
+class TalkingHeadSpeechMarkup(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.text_parts: list[str] = []
+        self.marks: list[tuple[str, int]] = []
+
+    @property
+    def text(self) -> str:
+        return "".join(self.text_parts)
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "mark":
+            mark_name = dict(attrs).get("name")
+            if mark_name is not None:
+                self.marks.append((mark_name, len(self.text)))
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+
+    def handle_data(self, data):
+        self.text_parts.append(data)
+
+
+def elevenlabs_timepoints(
+    marks: list[tuple[str, int]], alignment: dict
+) -> list[dict[str, str | float]]:
+    characters = alignment.get("characters", [])
+    starts = alignment.get("character_start_times_seconds", [])
+    result: list[dict[str, str | float]] = []
+    for mark_name, char_index in marks:
+        index = min(char_index, len(starts))
+        while index < len(characters) and characters[index].isspace():
+            index += 1
+        time_seconds = starts[index] if index < len(starts) else 0
+        result.append({"markName": mark_name, "timeSeconds": time_seconds})
+    return result
 
 
 @app.post(
@@ -268,8 +356,9 @@ def clear_history(
     dependencies=[Depends(get_current_user), Depends(require_csrf_token)],
 )
 async def text_to_speech(request: Request):
-    api_key = os.getenv("GOOGLE_TTS_API_KEY")
-    if not api_key:
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID")
+    if not api_key or not voice_id:
         raise HTTPException(status_code=503, detail="Text-to-speech is not configured")
 
     body = await request.body()
@@ -279,36 +368,77 @@ async def text_to_speech(request: Request):
         payload = json.loads(body)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=400, detail="Invalid text-to-speech request") from exc
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or not isinstance(payload.get("input"), dict):
         raise HTTPException(status_code=400, detail="Invalid text-to-speech request")
+    ssml = payload["input"].get("ssml")
+    if not isinstance(ssml, str) or len(ssml) > 16 * 1024:
+        raise HTTPException(status_code=400, detail="Invalid text-to-speech text")
+    markup = TalkingHeadSpeechMarkup()
+    try:
+        markup.feed(ssml)
+        markup.close()
+    except (ValueError, AssertionError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid speech markup") from exc
+    text = markup.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Speech text cannot be empty")
+    audio_config = payload.get("audioConfig")
+    if not isinstance(audio_config, dict):
+        audio_config = {}
+    speaking_rate = audio_config.get("speakingRate", 1.0)
+    try:
+        speed = min(1.2, max(0.7, float(speaking_rate)))
+    except (TypeError, ValueError):
+        speed = 1.0
+    voice = payload.get("voice")
+    language_code = voice.get("languageCode", "en") if isinstance(voice, dict) else "en"
+    if len(text) > 4500:
+        raise HTTPException(status_code=413, detail="Speech text is too long")
+    request_payload = {
+        "text": text,
+        "model_id": os.getenv("ELEVENLABS_MODEL_ID", "eleven_turbo_v2_5"),
+        "language_code": language_code.split("-")[0].lower(),
+        "voice_settings": {"speed": speed},
+    }
 
     def synthesize():
         upstream_request = URLRequest(
-            "https://texttospeech.googleapis.com/v1/text:synthesize",
-            data=json.dumps(payload).encode("utf-8"),
+            "https://api.elevenlabs.io/v1/text-to-speech/"
+            f"{quote(voice_id, safe='')}/with-timestamps?output_format=mp3_44100_128",
+            data=json.dumps(request_payload).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
-                "X-Goog-Api-Key": api_key,
+                "xi-api-key": api_key,
             },
             method="POST",
         )
         try:
             with urlopen(upstream_request, timeout=30) as upstream_response:
-                return (
-                    upstream_response.status,
-                    upstream_response.read(),
-                    upstream_response.headers.get_content_type(),
-                )
+                return upstream_response.status, json.loads(upstream_response.read())
         except HTTPError as exc:
-            return exc.code, exc.read(), "application/json"
+            logger.warning("ElevenLabs request failed with status %s", exc.code)
+            return exc.code, {"detail": "Text-to-speech provider rejected the request"}
         except URLError as exc:
-            logger.warning("Google text-to-speech request failed: %s", exc.reason)
+            logger.warning("ElevenLabs request failed: %s", exc.reason)
             raise HTTPException(
                 status_code=502, detail="Text-to-speech provider is unavailable"
             ) from exc
 
-    status_code, content, media_type = await asyncio.to_thread(synthesize)
-    return Response(content=content, status_code=status_code, media_type=media_type)
+    status_code, response_data = await asyncio.to_thread(synthesize)
+    if status_code != 200:
+        raise HTTPException(
+            status_code=502,
+            detail=response_data.get("detail", "Text-to-speech provider failed"),
+        )
+    audio_content = response_data.get("audio_base64")
+    alignment = response_data.get("alignment")
+    if not isinstance(audio_content, str) or not isinstance(alignment, dict):
+        logger.error("ElevenLabs returned a response missing audio or alignment")
+        raise HTTPException(status_code=502, detail="Invalid speech provider response")
+    return {
+        "audioContent": audio_content,
+        "timepoints": elevenlabs_timepoints(markup.marks, alignment),
+    }
 
 
 if __name__ == "__main__":

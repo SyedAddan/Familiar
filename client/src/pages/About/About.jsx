@@ -1,85 +1,44 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { SiteFrame } from "../../components/SiteLayout";
 
-import "./style.css";
-
-const About = () => {
-  return (
-    <div className="about">
-      <div className="div">
-        <footer className="footer">
-          <div className="copyright-text">© Familiar 2023</div>
-          <a href="/about">
-            <img
-              className="facebook-icon"
-              alt="Facebook icon"
-              src="/img/about/facebook-icon.png"
-            />
-          </a>
-          <a href="/about">
-            <img
-              className="instagram-icon"
-              alt="Instagram icon"
-              src="/img/about/instagram-icon.svg"
-            />
-          </a>
-          <a href="/about">
-            <img
-              className="twitter-icon"
-              alt="Twitter icon"
-              src="/img/about/twitter-icon.png"
-            />
-          </a>
-          <a href="/about">
-            <img
-              className="footer-divivder"
-              alt="Footer divivder"
-              src="/img/about/upper-divider.svg"
-            />
-          </a>
-        </footer>
-        <div className="content">
-          <div className="title">Still Building This Page!!!</div>
-          <img
-            className="dizzy-face"
-            alt="Dizzy face"
-            src="/img/about/dizzy-face.png"
-          />
+const About = () => (
+  <SiteFrame active="/about" className="info-page about-page">
+    <main className="info-main">
+      <section className="info-hero">
+        <div className="about-hero-copy">
+          <h1>Being heard can<br /><span>change the whole day.</span></h1>
+          <p>A gentle place to put your thoughts into words, at your pace.</p>
         </div>
-        <header className="header">
-          <div className="overlap">
-            <img
-              className="upper-divider"
-              alt="Upper divider"
-              src="/img/about/upper-divider.svg"
-            />
-            <Link to="/">
-              <div className="familiar-logo">Familiar</div>
-            </Link>
-            <div className="nav-buttons">
-              <Link to="/login">
-                <div className="login-selection">
-                  <div className="overlap-group">
-                    <div className="login-button" />
-                    <div className="text-wrapper">Login</div>
-                  </div>
-                </div>
-              </Link>
-              <Link to="/pricing">
-                <div className="text-wrapper-2">Pricing</div>
-              </Link>
-              <Link to="/contact">
-                <div className="text-wrapper-3">Contact</div>
-              </Link>
-              <Link to="/about">
-                <div className="text-wrapper-4">About</div>
-              </Link>
-            </div>
-          </div>
-        </header>
-      </div>
-    </div>
-  );
-};
+        <svg className="about-heart" viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="about-heart-face" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#ffd5dc" />
+              <stop offset="0.48" stopColor="#f18da3" />
+              <stop offset="1" stopColor="#c95173" />
+            </linearGradient>
+            <linearGradient id="about-heart-gloss" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#fff" stopOpacity=".8" />
+              <stop offset="1" stopColor="#fff" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M60 108 15 66C-7 42 8 9 35 12c12 1 20 9 25 19 5-10 13-18 25-19 27-3 42 30 20 54Z"
+            fill="#a83e62"
+            transform="translate(0 7)"
+          />
+          <path
+            d="M60 108 15 66C-7 42 8 9 35 12c12 1 20 9 25 19 5-10 13-18 25-19 27-3 42 30 20 54Z"
+            fill="url(#about-heart-face)"
+          />
+          <path
+            d="M25 58C13 42 22 23 37 24c8 1 13 5 17 12-12-5-23 2-29 22Z"
+            fill="url(#about-heart-gloss)"
+          />
+        </svg>
+        <img className="info-vector" src="/img/about/upper-divider.svg" alt="" />
+      </section>
+    </main>
+  </SiteFrame>
+);
 
 export default About;

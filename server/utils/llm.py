@@ -7,17 +7,18 @@ from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())  # read local .env file
 
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
-OPENAI_API_MODEL = "gpt-3.5-turbo"
-TOGETHER_API_MODEL = "meta-llama/Llama-3-70b-chat-hf"
-
-client = OpenAI(
-    api_key=TOGETHER_API_KEY,
-    base_url='https://api.together.xyz/v1',
-)
-
+GROQ_API_MODEL = os.getenv("GROQ_API_MODEL", "llama-3.3-70b-versatile")
 
 def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdditional, messages):
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not configured")
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.groq.com/openai/v1",
+    )
+
     if messages == []:
         sys_query = f'''Your Name is {avatarName}, and you have the following relationship with the human being: {avatarRelationship} and the user has provided this additional information about you: {avatarAdditional}.
         If you already know this information then ignore it and just respond to this query of the human: {message} and respond to it while keeping in kind the previous knowledge.
@@ -41,7 +42,7 @@ def generate_chatbot_response(message, avatarName, avatarRelationship, avatarAdd
         messages = messages + [{"role": "user", "content": message}]
         
     response = client.chat.completions.create(
-        model=TOGETHER_API_MODEL,
+        model=GROQ_API_MODEL,
         messages=messages
     ).choices[0].message.content
     

@@ -1,221 +1,194 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api, { ensureCsrfToken } from "../../api";
+import { SiteFrame } from "../../components/SiteLayout";
 
-import "./style.css";
+const initialProfile = {
+  avatarName: "",
+  relationship: "",
+  gender: "neutral",
+  additional: "",
+};
 
 const Signup = () => {
+  const [step, setStep] = useState(1);
+  const [profile, setProfile] = useState(initialProfile);
+  const [account, setAccount] = useState({
+    email: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleInputs = async () => {
-    const email = document.getElementById("emailInput").value;
-    const username = document.getElementById("usernameInput").value;
-    const avatarName = document.getElementById("avatarNameInput").value;
-    const relationship = document.getElementById("relationshipInput").value;
-    const additional = document.getElementById("additionalInput").value;
-    const password = document.getElementById("passwordInput").value;
-    const confirmPassword = document.getElementById(
-      "confirmPasswordInput"
-    ).value;
+  const updateProfile = (event) => {
+    setProfile((current) => ({ ...current, [event.target.name]: event.target.value }));
+  };
+  const updateAccount = (event) => {
+    setAccount((current) => ({ ...current, [event.target.name]: event.target.value }));
+  };
 
+  const submitSignup = async (event) => {
+    event.preventDefault();
+    if (step === 1) {
+      setError("");
+      setStep(2);
+      return;
+    }
+    if (account.password !== account.confirmPassword) {
+      setError("Those passwords don’t match yet.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
     try {
       await ensureCsrfToken();
       await api.post("/signupInputs", {
-        email,
-        username,
-        avatarName,
-        relationship,
-        additional,
-        password,
-        confirmPassword,
+        ...profile,
+        ...account,
       });
-
-      const formData = new FormData();
-      formData.append("audio", document.getElementById("voiceInput").files[0]);
-      await api.post("/uploadAudio", formData);
-      window.location.href = "/chat";
-    } catch (error) {
-      console.error("Error creating account:", error);
+      navigate("/chat");
+    } catch (requestError) {
+      setError(
+        requestError.response?.status === 409
+          ? "That email or username is already in use. Try signing in instead."
+          : requestError.response?.data?.detail ||
+            "We couldn’t create your space. Check your connection and try again."
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="sign-up">
-      <div className="div">
-        <header className="header">
-          <div className="overlap-2">
-            <img
-              className="upper-divider"
-              alt="Upper divider"
-              src="/img/signup/upper-divider.svg"
-            />
-            <Link to="/">
-              <div className="familiar-logo">Familiar</div>
-            </Link>
-            <div className="nav-buttons">
-              <Link to="/login">
-                <div className="login-selection">
-                  <div className="overlap-group-2">
-                    <div className="login-button" />
-                    <div className="text-wrapper-4">Login</div>
+    <SiteFrame active="/signup" className="auth-page signup-page">
+      <main className="auth-layout auth-layout-single">
+        <section className="auth-card signup-card">
+          <div className="signup-progress">
+            <div><span className={step === 1 ? "progress-number active" : "progress-number complete"}>{step > 1 ? "✓" : "01"}</span><span>Companion</span></div>
+            <span className="progress-line"><i className={step === 2 ? "filled" : ""} /></span>
+            <div><span className={`progress-number ${step === 2 ? "active" : ""}`}>02</span><span>Your account</span></div>
+          </div>
+          <div className="auth-card-heading">
+            <h1>{step === 1 ? "Your companion" : "Your account"}</h1>
+          </div>
+          <form className="auth-form" onSubmit={submitSignup}>
+            {step === 1 ? (
+              <>
+                <label className="field-label" htmlFor="avatarNameInput">What should we call them?</label>
+                <input
+                  autoFocus
+                  id="avatarNameInput"
+                  maxLength={80}
+                  name="avatarName"
+                  onChange={updateProfile}
+                  placeholder="A name that feels familiar"
+                  required
+                  value={profile.avatarName}
+                />
+                <label className="field-label" htmlFor="relationshipInput">How would you like them to show up?</label>
+                <input
+                  id="relationshipInput"
+                  maxLength={1024}
+                  name="relationship"
+                  onChange={updateProfile}
+                  placeholder="A supportive friend, a thoughtful listener…"
+                  required
+                  value={profile.relationship}
+                />
+                <label className="field-label" htmlFor="genderInput">Avatar voice style</label>
+                <select id="genderInput" name="gender" onChange={updateProfile} value={profile.gender}>
+                  <option value="neutral">Neutral</option>
+                  <option value="F">Feminine</option>
+                  <option value="M">Masculine</option>
+                </select>
+                <label className="field-label" htmlFor="additionalInput">Anything else they should know? <span>Optional</span></label>
+                <textarea
+                  id="additionalInput"
+                  maxLength={1024}
+                  name="additional"
+                  onChange={updateProfile}
+                  placeholder="A little context, your interests, or what matters to you"
+                  rows={3}
+                  value={profile.additional}
+                />
+              </>
+            ) : (
+              <>
+                <label className="field-label" htmlFor="emailInput">Email</label>
+                <input
+                  autoComplete="email"
+                  autoFocus
+                  id="emailInput"
+                  name="email"
+                  onChange={updateAccount}
+                  placeholder="you@example.com"
+                  required
+                  type="email"
+                  value={account.email}
+                />
+                <label className="field-label" htmlFor="usernameInput">Choose a username</label>
+                <input
+                  autoComplete="username"
+                  id="usernameInput"
+                  maxLength={80}
+                  name="username"
+                  onChange={updateAccount}
+                  placeholder="How you’ll sign in"
+                  required
+                  value={account.username}
+                />
+                <div className="field-row">
+                  <div>
+                    <label className="field-label" htmlFor="passwordInput">Password</label>
+                    <input
+                      autoComplete="new-password"
+                      id="passwordInput"
+                      minLength={8}
+                      name="password"
+                      onChange={updateAccount}
+                      placeholder="At least 8 characters"
+                      required
+                      type="password"
+                      value={account.password}
+                    />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="confirmPasswordInput">Confirm</label>
+                    <input
+                      autoComplete="new-password"
+                      id="confirmPasswordInput"
+                      minLength={8}
+                      name="confirmPassword"
+                      onChange={updateAccount}
+                      placeholder="Type it again"
+                      required
+                      type="password"
+                      value={account.confirmPassword}
+                    />
                   </div>
                 </div>
-              </Link>
-              <Link to="/pricing">
-                <div className="text-wrapper-5">Pricing</div>
-              </Link>
-              <Link to="/contact">
-                <div className="text-wrapper-6">Contact</div>
-              </Link>
-              <Link to="about">
-                <div className="text-wrapper-7">About</div>
-              </Link>
-            </div>
-          </div>
-        </header>
-        <div className="content">
-          <div className="text-wrapper-3">Sign Up</div>
-          <form
-            id="sign-up-form"
-            className="form"
-            name="sign-up-form"
-            method="post"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleInputs();
-            }}
-          >
-            <div className="email">
-              <input
-                id="emailInput"
-                className="text-field-wrapper"
-                placeholder="Email*"
-                type="email"
-                required
-              />
-            </div>
-            <div className="username">
-              <input
-                id="usernameInput"
-                className="text-field-wrapper"
-                placeholder="Username*"
-                type="text"
-                required
-              />
-            </div>
-            <div className="avatar-name">
-              <input
-                id="avatarNameInput"
-                className="text-field-wrapper"
-                placeholder="Avatar Name*"
-                type="text"
-                required
-              />
-            </div>
-            <div className="relationship">
-              <textarea
-                id="relationshipInput"
-                className="text-field-wrapper"
-                placeholder="Relationship*"
-                rows={3}
-                style={{ resize: "none" }}
-                required
-              />
-            </div>
-            <div className="additional">
-              <textarea
-                id="additionalInput"
-                className="text-field-wrapper"
-                placeholder="Any additional details"
-                rows={3}
-                style={{ resize: "none" }}
-              />
-            </div>
-            <div className="password">
-              <input
-                id="passwordInput"
-                className="text-field-wrapper"
-                placeholder="Password*"
-                type="password"
-                required
-              />
-            </div>
-            <div className="confirm-password">
-              <input
-                id="confirmPasswordInput"
-                className="text-field-wrapper"
-                placeholder="Confirm Password*"
-                type="password"
-                required
-              />
-            </div>
-            <div className="voice">
-              <div className="overlap">
-                <input
-                  id="voiceInput"
-                  className="text-field-wrapper"
-                  placeholder="Voice of the Avatar*"
-                  type="file"
-                  required
-                />
-              </div>
-            </div>
-            {/* <div className="image">
-              <div className="overlap">
-                <input
-                  className="text-field-wrapper"
-                  placeholder="Image of the Avatar*"
-                  type="file"
-                  required
-                />
-              </div>
-            </div> */}
-            <div className="overlap-group-wrapper">
-              <button
-                className="overlap-group"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleInputs();
-                }}
-              >
-                <div className="sign-up-text">Sign Up</div>
+              </>
+            )}
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <div className="signup-actions">
+              {step === 2 && (
+                <button className="button button-quiet" onClick={() => { setError(""); setStep(1); }} type="button">
+                  <span aria-hidden="true">←</span> Back
+                </button>
+              )}
+              <button className="button button-primary auth-submit" disabled={submitting} type="submit">
+                {submitting ? "Making your space…" : step === 1 ? "Continue" : "Create your space"}
+                <span aria-hidden="true">→</span>
               </button>
             </div>
           </form>
-          <Link to="/login">
-            <p className="text-wrapper">Already have an account? Sign In</p>
-          </Link>
-        </div>
-        <footer className="footer">
-          <div className="copyright-text">© Familiar 2023</div>
-          <a href="/signup">
-            <img
-              className="facebook-icon"
-              alt="Facebook icon"
-              src="/img/signup/facebook-icon.png"
-            />
-          </a>
-          <a href="/signup">
-            <img
-              className="instagram-icon"
-              alt="Instagram icon"
-              src="/img/signup/instagram-icon.svg"
-            />
-          </a>
-          <a href="/signup">
-            <img
-              className="twitter-icon"
-              alt="Twitter icon"
-              src="/img/signup/twitter-icon.png"
-            />
-          </a>
-          <img
-            className="footer-divivder"
-            alt="Footer divivder"
-            src="/img/signup/upper-divider.svg"
-          />
-        </footer>
-      </div>
-    </div>
+        </section>
+      </main>
+    </SiteFrame>
   );
 };
 

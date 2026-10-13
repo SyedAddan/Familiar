@@ -3,5 +3,5 @@ uvicorn
 openai
 python-multipart
 python-dotenv==1.2.2
-SQLAlchemy>=2.0,<3.0
 itsdangerous==2.2.0
+httpx

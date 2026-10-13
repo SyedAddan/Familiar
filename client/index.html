@@ -20,6 +20,15 @@
       rel="stylesheet"
     />
     <title>Familiar</title>
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("familiar-theme");
+        const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.dataset.theme = savedTheme || preferredTheme;
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
     <style>
       @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
       * {
@@ -32,7 +41,8 @@
         height: 100%;
       }
       button:focus-visible {
-        outline: 2px solid #4a90e2 !important;
+        outline: 2px solid #d9798a;
+        outline-offset: 3px;
       }
       a {
         text-decoration: none;

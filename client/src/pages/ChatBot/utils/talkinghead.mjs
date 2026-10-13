@@ -2167,7 +2167,7 @@ class TalkingHead {
     this.speechQueue = [];
     this.isSpeaking = false;
 
-    // Setup Google text-to-speech
+    // Validate the configured speech endpoint and supported audio encoding.
     if (this.opt.ttsEndpoint) {
       let audio = new Audio();
       if (audio.canPlayType("audio/ogg")) {
@@ -2178,9 +2178,7 @@ class TalkingHead {
         throw new Error("There was no support for either OGG or MP3 audio.");
       }
     } else {
-      throw new Error(
-        "You must provide some Google-compliant Text-To-Speech Endpoint."
-      );
+      throw new Error("A speech synthesis endpoint is required.");
     }
 
     // Setup 3D Animation
@@ -4221,15 +4219,35 @@ class TalkingHead {
             o.headers["Authorization"] = "Bearer " + (await this.opt.jwtGet());
           }
 
-          const res = await fetch(
-            this.opt.ttsEndpoint +
-              (this.opt.ttsApikey ? "?key=" + this.opt.ttsApikey : ""),
-            o
-          ).catch((error) => {
-            console.error("Error:", error);
+          let res;
+          try {
+            res = await fetch(
+              this.opt.ttsEndpoint +
+                (this.opt.ttsApikey ? "?key=" + this.opt.ttsApikey : ""),
+              o
+            );
+          } catch (error) {
+            console.error("Speech request failed:", error);
             this.startSpeaking(true);
-          });
-          const data = await res.json();
+            return;
+          }
+          let data;
+          try {
+            data = await res.json();
+          } catch (error) {
+            console.error("Speech service returned an invalid response:", error);
+            this.startSpeaking(true);
+            return;
+          }
+
+          if (!res.ok || !data || !data.audioContent || !Array.isArray(data.timepoints)) {
+            console.error(
+              "Speech request failed:",
+              data?.detail || `HTTP ${res.status}`
+            );
+            this.startSpeaking(true);
+            return;
+          }
 
           if (res.status === 200 && data && data.audioContent) {
             // Audio data
